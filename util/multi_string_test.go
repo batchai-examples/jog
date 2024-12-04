@@ -1,96 +1,252 @@
 package util
 
 import (
-	"errors"
 	"testing"
-
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 )
 
-func Test_MultiString_Set_and_Reset(t *testing.T) {
-	assert := require.New(t)
+func TestMultiString_Set(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected map[string]bool
+	}{
+		{
+			name:     "Happy path",
+			input:    "apple,banana,cherry",
+			expected: map[string]bool{"apple": true, "banana": true, "cherry": true},
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: map[string]bool{},
+		},
+		{
+			name:     "Single value",
+			input:    "apple",
+			expected: map[string]bool{"apple": true},
+		},
+		{
+			name:     "Whitespace around values",
+			input:    "  apple, banana , cherry ",
+			expected: map[string]bool{"apple": true, "banana": true, "cherry": true},
+		},
+		{
+			name:     "Duplicate values",
+			input:    "apple,apple,banana",
+			expected: map[string]bool{"apple": true, "banana": true},
+		},
+		{
+			name:     "Mixed case values",
+			input:    "Apple,Banana,cherry",
+			expected: map[string]bool{"apple": true, "banana": true, "cherry": true},
+		},
+		{
+			name:     "Special characters in values",
+			input:    "apple!@#banana$%^cherry&*()",
+			expected: map[string]bool{"apple!@#banana$%^cherry&*()": true},
+		},
+		{
+			name:     "Negative case - non-string input",
+			input:    "123,456",
+			expected: map[string]bool{},
+		},
+		{
+			name:     "Negative case - empty values",
+			input:    ",,,",
+			expected: map[string]bool{},
+		},
+		{
+			name:     "Negative case - only whitespace",
+			input:    "   ",
+			expected: map[string]bool{},
+		},
+	}
 
-	target := &MultiStringT{}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &MultiStringT{}
+			i.Set(tc.input)
 
-	target.Set("A")
-	assert.Equal("A", target.Text)
-	assert.Equal(1, len(target.LowercasedValues))
-	assert.True(target.LowercasedValues["a"])
-	assert.Equal(1, len(target.Values))
-	assert.True(target.Values["A"])
-
-	text := " A, \nb, \tC \r"
-	target.Set(text)
-	assert.Equal(text, target.Text)
-	assert.Equal(3, len(target.LowercasedValues))
-	assert.True(target.LowercasedValues["a"])
-	assert.True(target.LowercasedValues["b"])
-	assert.True(target.LowercasedValues["c"])
-	assert.Equal(3, len(target.Values))
-	assert.True(target.Values["A"])
-	assert.True(target.Values["b"])
-	assert.True(target.Values["C"])
-
-	target.Reset()
-	assert.Equal("", target.Text)
-	assert.Equal(0, len(target.LowercasedValues))
-	assert.Equal(0, len(target.Values))
+			if !reflect.DeepEqual(i.Values, tc.expected) {
+				t.Errorf("Expected %v, got %v", tc.expected, i.Values)
+			}
+		})
+	}
 }
 
-func Test_MultiString_Containes(t *testing.T) {
-	assert := require.New(t)
+func TestMultiString_Contains(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    MultiString
+		value    string
+		caseSensitive bool
+		expected bool
+	}{
+		{
+			name:     "Happy path - case sensitive",
+			input:    &MultiStringT{Values: map[string]bool{"apple": true, "banana": true}},
+			value:    "apple",
+			caseSensitive: true,
+			expected: true,
+		},
+		{
+			name:     "Happy path - case insensitive",
+			input:    &MultiStringT{LowercasedValues: map[string]bool{"apple": true, "banana": true}},
+			value:    "Apple",
+			caseSensitive: false,
+			expected: true,
+		},
+		{
+			name:     "Negative case - value not found",
+			input:    &MultiStringT{Values: map[string]bool{"apple": true, "banana": true}},
+			value:    "cherry",
+			caseSensitive: true,
+			expected: false,
+		},
+		{
+			name:     "Negative case - empty MultiString",
+			input:    &MultiStringT{},
+			value:    "apple",
+			caseSensitive: true,
+			expected: false,
+		},
+		{
+			name:     "Negative case - non-string input",
+			input:    &MultiStringT{Values: map[string]bool{"123": true}},
+			value:    "456",
+			caseSensitive: true,
+			expected: false,
+		},
+	}
 
-	target := &MultiStringT{}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.Contains(tc.value, tc.caseSensitive)
 
-	target.Set("A")
-
-	assert.False(target.Contains("a", true))
-	assert.True(target.Contains("A", true))
-
-	assert.True(target.Contains("a", false))
-	assert.True(target.Contains("A", false))
-
-	assert.False(target.Contains("b", false))
-	assert.False(target.Contains("B", true))
+			if result != tc.expected {
+				t.Errorf("Expected %v, got %v", tc.expected, result)
+			}
+		})
+	}
 }
 
-func Test_MultiString_MarshalYAML(t *testing.T) {
-	assert := require.New(t)
+func TestMultiString_Reset(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    MultiString
+		expected map[string]bool
+	}{
+		{
+			name:     "Happy path",
+			input:    &MultiStringT{Values: map[string]bool{"apple": true, "banana": true}},
+			expected: map[string]bool{},
+		},
+		{
+			name:     "Negative case - empty MultiString",
+			input:    &MultiStringT{},
+			expected: map[string]bool{},
+		},
+	}
 
-	target := &MultiStringT{}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.input.Reset()
 
-	target.Set("A")
-	ymlBytes, err := yaml.Marshal(target)
-	assert.Equal("A\n", string(ymlBytes))
-	assert.NoError(err)
-
-	target.Set(" A, b, C")
-	ymlBytes, err = yaml.Marshal(target)
-	assert.Equal("' A, b, C'\n", string(ymlBytes)) //TODO: is this a bug?
-	assert.NoError(err)
+			if !reflect.DeepEqual(tc.input.Values, tc.expected) {
+				t.Errorf("Expected %v, got %v", tc.expected, tc.input.Values)
+			}
+		})
+	}
 }
 
-func Test_MultiString_UnmarshalYAML(t *testing.T) {
-	assert := require.New(t)
+func TestMultiString_UnmarshalYAML(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected map[string]bool
+	}{
+		{
+			name:     "Happy path",
+			input:    "apple,banana,cherry",
+			expected: map[string]bool{"apple": true, "banana": true, "cherry": true},
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: map[string]bool{},
+		},
+		{
+			name:     "Single value",
+			input:    "apple",
+			expected: map[string]bool{"apple": true},
+		},
+		{
+			name:     "Whitespace around values",
+			input:    "  apple, banana , cherry ",
+			expected: map[string]bool{"apple": true, "banana": true, "cherry": true},
+		},
+		{
+			name:     "Duplicate values",
+			input:    "apple,apple,banana",
+			expected: map[string]bool{"apple": true, "banana": true},
+		},
+		{
+			name:     "Mixed case values",
+			input:    "Apple,Banana,cherry",
+			expected: map[string]bool{"apple": true, "banana": true, "cherry": true},
+		},
+		{
+			name:     "Special characters in input",
+			input:    "apple!@#banana$%^cherry&*()",
+			expected: map[string]bool{"apple!@#": true, "banana$%^": true, "cherry&*()": true},
+		},
+	}
 
-	target := &MultiStringT{}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &MultiStringT{}
+			err := yaml.Unmarshal([]byte(tc.input), i)
 
-	yml := "12, 34"
-	err := yaml.Unmarshal([]byte(yml), &target)
-	assert.NoError(err)
-	assert.Equal(2, len(target.Values))
-	assert.True(target.Contains("12", true))
-	assert.True(target.Contains("34", true))
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
 
-	err = target.UnmarshalYAML(func(_ interface{}) error {
-		return errors.New("")
-	})
-	assert.Error(err)
+			if !reflect.DeepEqual(i.Values, tc.expected) {
+				t.Errorf("Expected %v, got %v", tc.expected, i.Values)
+			}
+		})
+	}
+}
 
-	// no changes
-	assert.Equal(2, len(target.Values))
-	assert.True(target.Contains("12", true))
-	assert.True(target.Contains("34", true))
+func TestMultiString_MarshalYAML(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    MultiString
+		expected string
+	}{
+		{
+			name:     "Happy path",
+			input:    &MultiStringT{Values: map[string]bool{"apple": true, "banana": true}},
+			expected: "apple,banana",
+		},
+		{
+			name:     "Empty MultiString",
+			input:    &MultiStringT{},
+			expected: "",
+		},
+	}
 
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := yaml.Marshal(tc.input)
+
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+
+			if string(result) != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
 }

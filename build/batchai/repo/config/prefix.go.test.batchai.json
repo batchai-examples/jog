@@ -1,0 +1,27 @@
+{
+    "path": "config/prefix.go",
+    "model_usage_metrics": {
+        "Duration": 17817309483,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "config/prefix_test.go",
+    "existing_test_code": "",
+    "original_code": "package config\n\n// PrefixT ...\ntype PrefixT struct {\n\tElementT\n}\n\n// Prefix ...\ntype Prefix = *PrefixT\n\n// Reset ...\nfunc (i Prefix) Reset() {\n\ti.ElementT.Reset()\n\n\ti.Color.Set(\"FgBlue\")\n}\n\n// FromMap ...\nfunc (i Prefix) FromMap(m map[string]interface{}) error {\n\treturn i.ElementT.FromMap(m)\n}\n\n// ToMap ...\nfunc (i Prefix) ToMap() map[string]interface{} {\n\treturn i.ElementT.ToMap()\n}\n\n// UnmarshalYAML ...\nfunc (i Prefix) UnmarshalYAML(unmarshal func(interface{}) error) error {\n\treturn UnmarshalYAML(i, unmarshal)\n}\n\n// MarshalYAML ...\nfunc (i Prefix) MarshalYAML() (interface{}, error) {\n\treturn MarshalYAML(i)\n}\n",
+    "test_code": "package config\n\nimport (\n\t\"errors\"\n\t\"testing\"\n)\n\nfunc TestPrefix_Reset(t *testing.T) {\n\tt.Run(\"Happy Path\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\tp.Reset()\n\t\tif p.Color.Get() != \"FgBlue\" {\n\t\t\tt.Errorf(\"Expected Color to be 'FgBlue', got '%s'\", p.Color.Get())\n\t\t}\n\t})\n\n\tt.Run(\"Negative Case - Reset on nil pointer\", func(t *testing.T) {\n\t\tvar p Prefix\n\t\tp.Reset()\n\t\tif p.Color.Get() != \"\" {\n\t\t\tt.Errorf(\"Expected Color to be empty, got '%s'\", p.Color.Get())\n\t\t}\n\t})\n}\n\nfunc TestPrefix_FromMap(t *testing.T) {\n\tt.Run(\"Happy Path\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\terr := p.FromMap(map[string]interface{}{\n\t\t\t\"Color\": \"FgRed\",\n\t\t})\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got '%v'\", err)\n\t\t}\n\t\tif p.Color.Get() != \"FgRed\" {\n\t\t\tt.Errorf(\"Expected Color to be 'FgRed', got '%s'\", p.Color.Get())\n\t\t}\n\t})\n\n\tt.Run(\"Negative Case - Invalid map key\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\terr := p.FromMap(map[string]interface{}{\n\t\t\t\"InvalidKey\": \"FgRed\",\n\t\t})\n\t\tif err == nil {\n\t\t\tt.Errorf(\"Expected error, got nil\")\n\t\t}\n\t})\n\n\tt.Run(\"Negative Case - Invalid map value type\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\terr := p.FromMap(map[string]interface{}{\n\t\t\t\"Color\": 123,\n\t\t})\n\t\tif err == nil {\n\t\t\tt.Errorf(\"Expected error, got nil\")\n\t\t}\n\t})\n\n\tt.Run(\"Corner Case - Empty map\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\terr := p.FromMap(map[string]interface{}{})\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got '%v'\", err)\n\t\t}\n\t})\n}\n\nfunc TestPrefix_ToMap(t *testing.T) {\n\tt.Run(\"Happy Path\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\tp.Color.Set(\"FgGreen\")\n\t\tm := p.ToMap()\n\t\tif m[\"Color\"] != \"FgGreen\" {\n\t\t\tt.Errorf(\"Expected Color to be 'FgGreen', got '%v'\", m[\"Color\"])\n\t\t}\n\t})\n\n\tt.Run(\"Corner Case - Empty map\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\tm := p.ToMap()\n\t\tif len(m) != 0 {\n\t\t\tt.Errorf(\"Expected empty map, got '%v'\", m)\n\t\t}\n\t})\n}\n\nfunc TestPrefix_UnmarshalYAML(t *testing.T) {\n\tt.Run(\"Happy Path\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\terr := p.UnmarshalYAML(func(interface{}) error {\n\t\t\treturn nil\n\t\t})\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got '%v'\", err)\n\t\t}\n\t})\n\n\tt.Run(\"Negative Case - UnmarshalYAML error\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\terr := p.UnmarshalYAML(func(interface{}) error {\n\t\t\treturn errors.New(\"unmarshal error\")\n\t\t})\n\t\tif err == nil {\n\t\t\tt.Errorf(\"Expected error, got nil\")\n\t\t}\n\t})\n}\n\nfunc TestPrefix_MarshalYAML(t *testing.T) {\n\tt.Run(\"Happy Path\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\ti, err := p.MarshalYAML()\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got '%v'\", err)\n\t\t}\n\t\tif i == nil {\n\t\t\tt.Errorf(\"Expected non-nil value, got 'nil'\")\n\t\t}\n\t})\n\n\tt.Run(\"Corner Case - MarshalYAML returns nil\", func(t *testing.T) {\n\t\tp := \u0026PrefixT{}\n\t\ti, err := p.MarshalYAML()\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got '%v'\", err)\n\t\t}\n\t\tif i == nil {\n\t\t\tt.Errorf(\"Expected non-nil value, got 'nil'\")\n\t\t}\n\t})\n}\n",
+    "amount_of_generated_test_cases": 10,
+    "single_test_run_command": "go test -v config/prefix_test.go"
+}

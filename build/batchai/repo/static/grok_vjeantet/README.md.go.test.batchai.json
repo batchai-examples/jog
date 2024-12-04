@@ -1,0 +1,27 @@
+{
+    "path": "static/grok_vjeantet/README.md.go",
+    "model_usage_metrics": {
+        "Duration": 11717700956,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/grok_vjeantet/README.md_test.go",
+    "existing_test_code": "",
+    "original_code": "package grok_vjeantet \n\nconst (\n  // README_md ...\n  README_md string = `The default GROK patterns in ~/.jog/grok_vjeantet are copy of https://github.com/vjeantet/grok/tree/master/patterns v1.0.0\n\nhttps://github.com/vjeantet/grok LICENSE file: ~/.jog/grok_vjeantet.LICENSE`\n)\n",
+    "test_code": "package grok_vjeantet\n\nimport (\n\t\"testing\"\n)\n\n// TestREADME_md checks if the README_md constant contains the expected content.\nfunc TestREADME_md(t *testing.T) {\n\texpected := `The default GROK patterns in ~/.jog/grok_vjeantet are copy of https://github.com/vjeantet/grok/tree/master/patterns v1.0.0\n\nhttps://github.com/vjeantet/grok LICENSE file: ~/.jog/grok_vjeantet.LICENSE`\n\tif README_md != expected {\n\t\tt.Errorf(\"README_md does not match the expected content. Expected:\\n%s\\nGot:\\n%s\", expected, README_md)\n\t}\n}\n\n// TestREADME_md_Empty checks if the README_md constant is not empty.\nfunc TestREADME_md_Empty(t *testing.T) {\n\tif len(README_md) == 0 {\n\t\tt.Errorf(\"README_md should not be empty\")\n\t}\n}\n\n// TestREADME_md_ContainsURL checks if the README_md constant contains a URL.\nfunc TestREADME_md_ContainsURL(t *testing.T) {\n\turl := \"https://github.com/vjeantet/grok/tree/master/patterns v1.0.0\"\n\tif !strings.Contains(README_md, url) {\n\t\tt.Errorf(\"README_md should contain the URL: %s\", url)\n\t}\n}\n\n// TestREADME_md_ContainsLicenseFile checks if the README_md constant contains a license file reference.\nfunc TestREADME_md_ContainsLicenseFile(t *testing.T) {\n\tlicenseFile := \"https://github.com/vjeantet/grok LICENSE file: ~/.jog/grok_vjeantet.LICENSE\"\n\tif !strings.Contains(README_md, licenseFile) {\n\t\tt.Errorf(\"README_md should contain the license file reference: %s\", licenseFile)\n\t}\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test static/grok_vjeantet/README.md_test.go"
+}

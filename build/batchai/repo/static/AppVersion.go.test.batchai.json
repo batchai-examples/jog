@@ -1,0 +1,27 @@
+{
+    "path": "static/AppVersion.go",
+    "model_usage_metrics": {
+        "Duration": 7491440138,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/AppVersion_test.go",
+    "existing_test_code": "",
+    "original_code": "package static \n\nconst (\n  // AppVersion ...\n  AppVersion string = `v1.0.3\n`\n)\n",
+    "test_code": "package static\n\nimport (\n\t\"testing\"\n)\n\n// TestAppVersion checks if the AppVersion constant is correctly defined.\nfunc TestAppVersion(t *testing.T) {\n\ttestCases := []struct {\n\t\tname     string\n\t\texpected string\n\t}{\n\t\t{\n\t\t\tname:     \"Happy path\",\n\t\t\texpected: `v1.0.3`,\n\t\t},\n\t\t{\n\t\t\tname:     \"Negative case - empty version\",\n\t\t\texpected: ``,\n\t\t},\n\t\t{\n\t\t\tname:     \"Corner case - trailing newline\",\n\t\t\texpected: `v1.0.3\\n`,\n\t\t},\n\t\t{\n\t\t\tname:     \"Corner case - leading whitespace\",\n\t\t\texpected: `\\tv1.0.3\\n`,\n\t\t},\n\t}\n\n\tfor _, tc := range testCases {\n\t\tt.Run(tc.name, func(t *testing.T) {\n\t\t\tif AppVersion != tc.expected {\n\t\t\t\tt.Errorf(\"Expected %q, got %q\", tc.expected, AppVersion)\n\t\t\t}\n\t\t})\n\t}\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test -run TestAppVersion"
+}

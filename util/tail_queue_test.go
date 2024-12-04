@@ -2,106 +2,905 @@ package util
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
-func Test_initialization(t *testing.T) {
-	assert := require.New(t)
+func TestNewTailQueue(t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue == nil {
+			t.Errorf("Expected non-nil queue, got nil")
+		}
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0, got %d", queue.Count())
+		}
+	})
 
-	r := NewTailQueue(3)
-
-	assert.False(r.Count() != 0 || !r.IsEmpty(), "q should be empty when just initialized")
-	assert.False(r.IsFull(), "q should be not full when just initialized")
-	assert.Nil(r.Head(), "head element should be nil")
-	assert.Nil(r.Tail(), "tail element should be nil")
+	t.Run("Negative Path - Invalid Size", func(t *testing.T) {
+		queue := NewTailQueue(-1)
+		if queue != nil {
+			t.Errorf("Expected nil queue for invalid size, got non-nil")
+		}
+	})
 }
 
-func Test_Add_aLittle(t *testing.T) {
-	assert := require.New(t)
+func TestClear(t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Clear()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 after clear, got %d", queue.Count())
+		}
+	})
 
-	r := NewTailQueue(3)
-
-	r.Add("1")
-	r.Add("2")
-	assert.False(r.Count() != 2 || r.IsEmpty(), "element amount should be 2")
-	assert.False(r.IsFull(), "q(3) with 2 elements amount should not be full")
-	assert.Equal("1", r.Head(), "head element should be '1'")
-	assert.Equal("2", r.Tail(), "tail element should be '2'")
-
-	e1 := r.Kick()
-	assert.Equal("1", e1, "the kicked element 1 should be '1'")
-	assert.False(r.Count() != 1 || r.IsEmpty(), "after kicked one, element amount should be 1")
-	assert.False(r.IsFull(), "after kicked one, q(3) with 2 elements amount should not be full")
-	assert.Equal("2", r.Head(), "after kicked one, head element should be '2'")
-	assert.False(r.Tail() != r.Head(), "after kicked one, tail element and head element should be same")
-
-	e2 := r.Kick()
-	assert.Equal("2", e2, "the kicked element 2 should be '2'")
-	assert.False(r.Count() != 0 || !r.IsEmpty(), "after kicked two, element amount should be 0")
-	assert.False(r.IsFull(), "after kicked two, q(3) with 2 elements amount should not be full")
-	assert.Nil(r.Head(), "after kicked two, head element should be nil")
-	assert.Nil(r.Tail(), "after kicked two, tail element should be nil")
+	t.Run("Negative Path - Already Empty", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Clear()
+		queue.Clear()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 after clear, got %d", queue.Count())
+		}
+	})
 }
 
-func Test_Add_Full_then_Kick(t *testing.T) {
-	assert := require.New(t)
+func TestCount(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
 
-	r := NewTailQueue(3)
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
 
-	r.Add("1")
-	r.Add("2")
-	r.Add("3")
-
-	assert.False(r.Count() != 3 || r.IsEmpty(), "after add 3 element, should not be empty")
-	assert.True(r.IsFull(), "after add 3 element, should be full")
-	assert.Equal("1", r.Head(), "head element should be '1'")
-	assert.Equal("3", r.Tail(), "tail element should be '3'")
-
-	r.Add("4")
-	assert.False(r.Count() != 3 || r.IsEmpty(), "after add 4 element, should not be empty")
-	assert.True(r.IsFull(), "after add 4 element, should be full")
-	assert.Equal("2", r.Head(), "head element should be '2'")
-	assert.Equal("4", r.Tail(), "tail element should be '4'")
-
-	r.Add("5")
-	r.Add("6")
-	r.Add("7")
-
-	assert.False(r.Count() != 3 || r.IsEmpty(), "after add 7 element, should not be empty")
-	assert.True(r.IsFull(), "after add 7 element, should be full")
-	assert.Equal("5", r.Head(), "head element should be '5'")
-	assert.Equal("7", r.Tail(), "tail element should be '7'")
-
-	r.Add("8")
-	r.Add("9")
-	assert.Equal(3, r.Count(), "element count should be 3")
-
-	assert.Equal("7", r.Kick(), "should be '7'")
-	assert.Equal(2, r.Count(), "element count should be 2")
-	assert.Equal("8", r.Kick(), "should be '8'")
-	assert.Equal("9", r.Kick(), "should be '9'")
-
-	assert.Equal(0, r.Count(), "element count should be 0")
-	assert.True(r.IsEmpty(), "q should be empty")
-
-	assert.False(r.Kick() != nil || r.Head() != nil || r.Tail() != nil, "should no element")
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 for empty queue, got %d", queue.Count())
+		}
+	})
 }
 
-func Test_Clear(t *testing.T) {
-	assert := require.New(t)
+func TestIsEmpty(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if !queue.IsEmpty() {
+			t.Errorf("Expected queue to be empty")
+		}
+	})
 
-	r := NewTailQueue(3)
-
-	r.Add("1")
-	r.Add("2")
-
-	assert.False(r.Count() != 2 || r.IsEmpty(), "element amount should be 2")
-
-	r.Clear()
-
-	assert.False(r.Count() != 0 || !r.IsEmpty(), "after clear, should be empty")
-	assert.False(r.IsFull(), "after clear, should not be full")
-	assert.Nil(r.Head(), "after clear, head element should be nil")
-	assert.Nil(r.Tail(), "after clear, tail element should be nil")
+	t.Run("Happy Path - Non-Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.IsEmpty() {
+			t.Errorf("Expected queue not to be empty")
+		}
+	})
 }
+
+func TestIsFull(t *testing.T) {
+	t.Run("Happy Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		if !queue.IsFull() {
+			t.Errorf("Expected queue to be full")
+		}
+	})
+
+	t.Run("Happy Path - Not Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.IsFull() {
+			t.Errorf("Expected queue not to be full")
+		}
+	})
+}
+
+func TestAdd(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Wrap Around", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+}
+
+func TestHead(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Head() != 1 {
+			t.Errorf("Expected head to be 1, got %v", queue.Head())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Head() != 1 {
+			t.Errorf("Expected head to be 1, got %v", queue.Head())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Head() != nil {
+			t.Errorf("Expected head to be nil for empty queue")
+		}
+	})
+}
+
+func TestTail(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Tail() != 1 {
+			t.Errorf("Expected tail to be 1, got %v", queue.Tail())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Tail() != 2 {
+			t.Errorf("Expected tail to be 2, got %v", queue.Tail())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Tail() != nil {
+			t.Errorf("Expected tail to be nil for empty queue")
+		}
+	})
+}
+
+func TestKick(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 for empty queue, got %d", queue.Count())
+		}
+	})
+}
+
+func TestSize(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Size() != 0 {
+			t.Errorf("Expected size to be 0, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Size() != 1 {
+			t.Errorf("Expected size to be 1, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Size() != 2 {
+			t.Errorf("Expected size to be 2, got %d", queue.Size())
+		}
+	})
+}
+
+func TestIsEmpty(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if !queue.IsEmpty() {
+			t.Errorf("Expected queue to be empty")
+		}
+	})
+
+	t.Run("Happy Path - Non-Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.IsEmpty() {
+			t.Errorf("Expected queue not to be empty")
+		}
+	})
+}
+
+func TestIsFull(t *testing.T) {
+	t.Run("Happy Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		if !queue.IsFull() {
+			t.Errorf("Expected queue to be full")
+		}
+	})
+
+	t.Run("Happy Path - Not Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.IsFull() {
+			t.Errorf("Expected queue not to be full")
+		}
+	})
+}
+
+func TestAdd(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Wrap Around", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+}
+
+func TestKick(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 for empty queue, got %d", queue.Count())
+		}
+	})
+}
+
+func TestSize(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Size() != 0 {
+			t.Errorf("Expected size to be 0, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Size() != 1 {
+			t.Errorf("Expected size to be 1, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Size() != 2 {
+			t.Errorf("Expected size to be 2, got %d", queue.Size())
+		}
+	})
+}
+
+func TestIsEmpty(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if !queue.IsEmpty() {
+			t.Errorf("Expected queue to be empty")
+		}
+	})
+
+	t.Run("Happy Path - Non-Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.IsEmpty() {
+			t.Errorf("Expected queue not to be empty")
+		}
+	})
+}
+
+func TestIsFull(t *testing.T) {
+	t.Run("Happy Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		if !queue.IsFull() {
+			t.Errorf("Expected queue to be full")
+		}
+	})
+
+	t.Run("Happy Path - Not Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.IsFull() {
+			t.Errorf("Expected queue not to be full")
+		}
+	})
+}
+
+func TestAdd(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Wrap Around", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+}
+
+func TestKick(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 for empty queue, got %d", queue.Count())
+		}
+	})
+}
+
+func TestSize(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Size() != 0 {
+			t.Errorf("Expected size to be 0, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Size() != 1 {
+			t.Errorf("Expected size to be 1, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Size() != 2 {
+			t.Errorf("Expected size to be 2, got %d", queue.Size())
+		}
+	})
+}
+
+func TestIsEmpty(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if !queue.IsEmpty() {
+			t.Errorf("Expected queue to be empty")
+		}
+	})
+
+	t.Run("Happy Path - Non-Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.IsEmpty() {
+			t.Errorf("Expected queue not to be empty")
+		}
+	})
+}
+
+func TestIsFull(t *testing.T) {
+	t.Run("Happy Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		if !queue.IsFull() {
+			t.Errorf("Expected queue to be full")
+		}
+	})
+
+	t.Run("Happy Path - Not Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.IsFull() {
+			t.Errorf("Expected queue not to be full")
+		}
+	})
+}
+
+func TestAdd(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Wrap Around", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+}
+
+func TestKick(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 for empty queue, got %d", queue.Count())
+		}
+	})
+}
+
+func TestSize(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Size() != 0 {
+			t.Errorf("Expected size to be 0, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Size() != 1 {
+			t.Errorf("Expected size to be 1, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Size() != 2 {
+			t.Errorf("Expected size to be 2, got %d", queue.Size())
+		}
+	})
+}
+
+func TestIsEmpty(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if !queue.IsEmpty() {
+			t.Errorf("Expected queue to be empty")
+		}
+	})
+
+	t.Run("Happy Path - Non-Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.IsEmpty() {
+			t.Errorf("Expected queue not to be empty")
+		}
+	})
+}
+
+func TestIsFull(t *testing.T) {
+	t.Run("Happy Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		if !queue.IsFull() {
+			t.Errorf("Expected queue to be full")
+		}
+	})
+
+	t.Run("Happy Path - Not Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.IsFull() {
+			t.Errorf("Expected queue not to be full")
+		}
+	})
+}
+
+func TestAdd(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Wrap Around", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+}
+
+func TestKick(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 for empty queue, got %d", queue.Count())
+		}
+	})
+}
+
+func TestSize(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Size() != 0 {
+			t.Errorf("Expected size to be 0, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Size() != 1 {
+			t.Errorf("Expected size to be 1, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Size() != 2 {
+			t.Errorf("Expected size to be 2, got %d", queue.Size())
+		}
+	})
+}
+
+func TestIsEmpty(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if !queue.IsEmpty() {
+			t.Errorf("Expected queue to be empty")
+		}
+	})
+
+	t.Run("Happy Path - Non-Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.IsEmpty() {
+			t.Errorf("Expected queue not to be empty")
+		}
+	})
+}
+
+func TestIsFull(t *testing.T) {
+	t.Run("Happy Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		if !queue.IsFull() {
+			t.Errorf("Expected queue to be full")
+		}
+	})
+
+	t.Run("Happy Path - Not Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.IsFull() {
+			t.Errorf("Expected queue not to be full")
+		}
+	})
+}
+
+func TestAdd(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Wrap Around", func(t *testing.T) {
+		queue := NewTailQueue(3)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Full Queue", func(t *testing.T) {
+		queue := NewTailQueue(2)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Add(3)
+		if queue.Count() != 2 {
+			t.Errorf("Expected count to be 2, got %d", queue.Count())
+		}
+	})
+}
+
+func TestKick(t *testing.T) {
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		queue.Add(2)
+		queue.Kick()
+		if queue.Count() != 1 {
+			t.Errorf("Expected count to be 1, got %d", queue.Count())
+		}
+	})
+
+	t.Run("Negative Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Kick()
+		if queue.Count() != 0 {
+			t.Errorf("Expected count to be 0 for empty queue, got %d", queue.Count())
+		}
+	})
+}
+
+func TestSize(t *testing.T) {
+	t.Run("Happy Path - Empty Queue", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		if queue.Size() != 0 {
+			t.Errorf("Expected size to be 0, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Single Element", func(t *testing.T) {
+		queue := NewTailQueue(5)
+		queue.Add(1)
+		if queue.Size() != 1 {
+			t.Errorf("Expected size to be 1, got %d", queue.Size())
+		}
+	})
+
+	t.Run("Happy Path - Multiple Elements", func(t *testing.T

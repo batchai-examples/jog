@@ -1,0 +1,27 @@
+{
+    "path": "util/any_value.go",
+    "model_usage_metrics": {
+        "Duration": 14567292201,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "util/any_value_test.go",
+    "existing_test_code": "",
+    "original_code": "package util\n\nimport (\n\t\"encoding/json\"\n\t\"log\"\n\t\"reflect\"\n\n\t\"github.com/gookit/goutil/strutil\"\n)\n\n// AnyValueT ...\ntype AnyValueT struct {\n\tRaw    interface{}\n\tText   string\n\tLineNo int\n}\n\n// AnyValue ...\ntype AnyValue = *AnyValueT\n\n// Format ...\nfunc (i AnyValue) String() string {\n\treturn i.Text\n}\n\n// AnyValueFromRaw ...\nfunc AnyValueFromRaw(lineNo int, raw interface{}, replace map[string]string) AnyValue {\n\tvar text string\n\n\talreadyNormalized := false\n\n\tif raw == nil {\n\t\treturn \u0026AnyValueT{Raw: nil, Text: \"\", LineNo: lineNo}\n\t}\n\n\tkind := reflect.TypeOf(raw).Kind()\n\tif kind == reflect.Map || kind == reflect.Slice || kind == reflect.Array {\n\t\tjson, err := json.MarshalIndent(raw, \"\", \"  \")\n\t\tif err != nil {\n\t\t\t// TODO: should we panic with this err ?\n\t\t\tlog.Printf(\"line %v: failed to json format: %v\\n\", lineNo, raw)\n\t\t} else {\n\t\t\ttext = string(json)\n\t\t}\n\t\talreadyNormalized = true\n\t} else {\n\t\ttext = strutil.MustString(raw)\n\t}\n\n\t/* TODO: why?\n\tif len(text) \u003e= 1 {\n\t\tif text[:1] == \"\\\"\" || text[:1] == \"'\" {\n\t\t\ttext = text[1:]\n\t\t}\n\t}\n\tif len(text) \u003e= 1 {\n\t\tif text[len(text)-1:] == \"\\\"\" || text[len(text)-1:] == \"'\" {\n\t\t\ttext = text[:len(text)-1]\n\t\t}\n\t}\n\t*/\n\ttext = strutil.Replaces(text, replace)\n\n\tif alreadyNormalized == false {\n\t\tvar obj interface{}\n\t\tif err := json.Unmarshal([]byte(text), \u0026obj); err == nil {\n\t\t\tjson, err := json.MarshalIndent(obj, \"\", \"  \")\n\t\t\tif err == nil {\n\t\t\t\ttext = string(json)\n\t\t\t}\n\t\t}\n\t\t// TODO: should we panic with above err ?\n\t}\n\n\treturn \u0026AnyValueT{Raw: raw, Text: text, LineNo: lineNo}\n}\n",
+    "test_code": "package util\n\nimport (\n\t\"encoding/json\"\n\t\"strings\"\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/assert\"\n)\n\nfunc TestAnyValueFromRaw(t *testing.T) {\n\ttestCases := []struct {\n\t\tlineNo     int\n\t\traw        interface{}\n\t\treplace    map[string]string\n\t\texpected   string\n\t}{\n\t\t{\n\t\t\tlineNo: 1,\n\t\t\traw:    nil,\n\t\t\treplace: map[string]string{},\n\t\t\texpected: \"\",\n\t\t},\n\t\t{\n\t\t\tlineNo: 2,\n\t\t\traw:    \"test\",\n\t\t\treplace: map[string]string{},\n\t\t\texpected: \"test\",\n\t\t},\n\t\t{\n\t\t\tlineNo: 3,\n\t\t\traw:    map[string]interface{}{\"key\": \"value\"},\n\t\t\treplace: map[string]string{},\n\t\t\texpected: `{\n  \"key\": \"value\"\n}`,\n\t\t},\n\t\t{\n\t\t\tlineNo: 4,\n\t\t\traw:    []interface{}{\"item1\", \"item2\"},\n\t\t\treplace: map[string]string{},\n\t\t\texpected: `[  \n  \"item1\",  \n  \"item2\"  \n]`,\n\t\t},\n\t\t{\n\t\t\tlineNo: 5,\n\t\t\traw:    `{\"key\": \"value\"}`,\n\t\t\treplace: map[string]string{},\n\t\t\texpected: `{\n  \"key\": \"value\"\n}`,\n\t\t},\n\t\t{\n\t\t\tlineNo: 6,\n\t\t\traw:    `\"test\"`,\n\t\t\treplace: map[string]string{},\n\t\t\texpected: \"test\",\n\t\t},\n\t\t{\n\t\t\tlineNo: 7,\n\t\t\traw:    `'test'`,\n\t\t\treplace: map[string]string{},\n\t\t\texpected: \"test\",\n\t\t},\n\t\t{\n\t\t\tlineNo: 8,\n\t\t\traw:    `{\"key\": \"value\"}`,\n\t\t\treplace: map[string]string{\"old\": \"new\"},\n\t\t\texpected: `{\n  \"key\": \"newValue\"\n}`,\n\t\t},\n\t\t{\n\t\t\tlineNo: 9,\n\t\t\traw:    `{\"key\": \"value\"}`,\n\t\t\treplace: map[string]string{},\n\t\t\texpected: `{\n  \"key\": \"value\"\n}`,\n\t\t},\n\t\t{\n\t\t\tlineNo: 10,\n\t\t\traw:    `{\"key\": \"value\"}`,\n\t\t\treplace: map[string]string{},\n\t\t\texpected: `{\n  \"key\": \"value\"\n}`,\n\t\t},\n\t}\n\n\tfor _, tc := range testCases {\n\t\tt.Run(fmt.Sprintf(\"lineNo=%d,raw=%v\", tc.lineNo, tc.raw), func(t *testing.T) {\n\t\t\tresult := AnyValueFromRaw(tc.lineNo, tc.raw, tc.replace)\n\t\t\tassert.Equal(t, tc.expected, result.Text)\n\t\t})\n\t}\n}\n",
+    "amount_of_generated_test_cases": 10,
+    "single_test_run_command": "go test -v util/any_value_test.go"
+}

@@ -1,0 +1,27 @@
+{
+    "path": "config/other_fields.go",
+    "model_usage_metrics": {
+        "Duration": 17988081921,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "config/other_fields_test.go",
+    "existing_test_code": "",
+    "original_code": "package config\n\n// OtherFieldsT ...\ntype OtherFieldsT struct {\n\tName      Element\n\tSeparator SeparatorField\n\tValue     Element\n}\n\n// OtherFields ...\ntype OtherFields = *OtherFieldsT\n\n// Reset ...\nfunc (i OtherFields) Reset() {\n\ti.Name = \u0026ElementT{}\n\ti.Name.Reset()\n\n\ti.Separator = \u0026SeparatorFieldT{}\n\ti.Separator.Reset()\n\n\ti.Value = \u0026ElementT{}\n\ti.Value.Reset()\n}\n\n// ToMap ...\nfunc (i OtherFields) ToMap() map[string]interface{} {\n\tr := make(map[string]interface{})\n\tr[\"name\"] = i.Name.ToMap()\n\tr[\"separator\"] = i.Separator.ToMap()\n\tr[\"value\"] = i.Value.ToMap()\n\treturn r\n}\n",
+    "test_code": "package config\n\nimport (\n\t\"testing\"\n)\n\nfunc TestReset(t *testing.T) {\n\t// Arrange\n\ti := \u0026OtherFieldsT{\n\t\tName:      \u0026ElementT{},\n\t\tSeparator: \u0026SeparatorFieldT{},\n\t\tValue:     \u0026ElementT{},\n\t}\n\n\t// Act\n\ti.Reset()\n\n\t// Assert\n\tif i.Name == nil || !i.Name.IsReset() {\n\t\tt.Errorf(\"Expected Name to be reset, but got %v\", i.Name)\n\t}\n\tif i.Separator == nil || !i.Separator.IsReset() {\n\t\tt.Errorf(\"Expected Separator to be reset, but got %v\", i.Separator)\n\t}\n\tif i.Value == nil || !i.Value.IsReset() {\n\t\tt.Errorf(\"Expected Value to be reset, but got %v\", i.Value)\n\t}\n}\n\nfunc TestToMap(t *testing.T) {\n\t// Arrange\n\ti := \u0026OtherFieldsT{\n\t\tName:      \u0026ElementT{Name: \"testName\"},\n\t\tSeparator: \u0026SeparatorFieldT{Value: \"-\"},\n\t\tValue:     \u0026ElementT{Value: \"testValue\"},\n\t}\n\n\t// Act\n\tresult := i.ToMap()\n\n\t// Assert\n\tif result[\"name\"] != \"testName\" {\n\t\tt.Errorf(\"Expected name to be 'testName', but got %v\", result[\"name\"])\n\t}\n\tif result[\"separator\"] != \"-\" {\n\t\tt.Errorf(\"Expected separator to be '-', but got %v\", result[\"separator\"])\n\t}\n\tif result[\"value\"] != \"testValue\" {\n\t\tt.Errorf(\"Expected value to be 'testValue', but got %v\", result[\"value\"])\n\t}\n}\n\nfunc TestResetWithNilFields(t *testing.T) {\n\t// Arrange\n\ti := \u0026OtherFieldsT{}\n\n\t// Act\n\ti.Reset()\n\n\t// Assert\n\tif i.Name != nil || !i.Name.IsReset() {\n\t\tt.Errorf(\"Expected Name to be reset, but got %v\", i.Name)\n\t}\n\tif i.Separator != nil || !i.Separator.IsReset() {\n\t\tt.Errorf(\"Expected Separator to be reset, but got %v\", i.Separator)\n\t}\n\tif i.Value != nil || !i.Value.IsReset() {\n\t\tt.Errorf(\"Expected Value to be reset, but got %v\", i.Value)\n\t}\n}\n\nfunc TestToMapWithNilFields(t *testing.T) {\n\t// Arrange\n\ti := \u0026OtherFieldsT{}\n\n\t// Act\n\tresult := i.ToMap()\n\n\t// Assert\n\tif result[\"name\"] != nil {\n\t\tt.Errorf(\"Expected name to be nil, but got %v\", result[\"name\"])\n\t}\n\tif result[\"separator\"] != nil {\n\t\tt.Errorf(\"Expected separator to be nil, but got %v\", result[\"separator\"])\n\t}\n\tif result[\"value\"] != nil {\n\t\tt.Errorf(\"Expected value to be nil, but got %v\", result[\"value\"])\n\t}\n}\n\nfunc TestResetWithEmptyFields(t *testing.T) {\n\t// Arrange\n\ti := \u0026OtherFieldsT{\n\t\tName:      \u0026ElementT{Name: \"\"},\n\t\tSeparator: \u0026SeparatorFieldT{Value: \"\"},\n\t\tValue:     \u0026ElementT{Value: \"\"},\n\t}\n\n\t// Act\n\ti.Reset()\n\n\t// Assert\n\tif i.Name == nil || !i.Name.IsReset() {\n\t\tt.Errorf(\"Expected Name to be reset, but got %v\", i.Name)\n\t}\n\tif i.Separator == nil || !i.Separator.IsReset() {\n\t\tt.Errorf(\"Expected Separator to be reset, but got %v\", i.Separator)\n\t}\n\tif i.Value == nil || !i.Value.IsReset() {\n\t\tt.Errorf(\"Expected Value to be reset, but got %v\", i.Value)\n\t}\n}\n\nfunc TestToMapWithEmptyFields(t *testing.T) {\n\t// Arrange\n\ti := \u0026OtherFieldsT{\n\t\tName:      \u0026ElementT{Name: \"\"},\n\t\tSeparator: \u0026SeparatorFieldT{Value: \"\"},\n\t\tValue:     \u0026ElementT{Value: \"\"},\n\t}\n\n\t// Act\n\tresult := i.ToMap()\n\n\t// Assert\n\tif result[\"name\"] != \"\" {\n\t\tt.Errorf(\"Expected name to be '', but got %v\", result[\"name\"])\n\t}\n\tif result[\"separator\"] != \"\" {\n\t\tt.Errorf(\"Expected separator to be '', but got %v\", result[\"separator\"])\n\t}\n\tif result[\"value\"] != \"\" {\n\t\tt.Errorf(\"Expected value to be '', but got %v\", result[\"value\"])\n\t}\n}\n",
+    "amount_of_generated_test_cases": 5,
+    "single_test_run_command": "go test -v config/other_fields_test.go"
+}

@@ -1,0 +1,27 @@
+{
+    "path": "static/grok_vjeantet/mcollective-patterns.go",
+    "model_usage_metrics": {
+        "Duration": 10428877048,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/grok_vjeantet/mcollective-patterns_test.go",
+    "existing_test_code": "",
+    "original_code": "package grok_vjeantet \n\nconst (\n  // Mcollective_patterns ...\n  Mcollective_patterns string = `# Remember, these can be multi-line events.\nMCOLLECTIVE ., \\[%{TIMESTAMP_ISO8601:timestamp} #%{POSINT:pid}\\]%{SPACE}%{LOGLEVEL:event_level}\n\nMCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:\n`\n)\n",
+    "test_code": "package grok_vjeantet\n\nimport (\n\t\"testing\"\n)\n\n// TestMcollectivePatternsHappyPath tests the Mcollective_patterns constant with a valid multi-line event.\nfunc TestMcollectivePatternsHappyPath(t *testing.T) {\n\texpected := `# Remember, these can be multi-line events.\nMCOLLECTIVE ., [%{TIMESTAMP_ISO8601:timestamp} #%{POSINT:pid}\\]%{SPACE}%{LOGLEVEL:event_level}\n\nMCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:\n`\n\tif Mcollective_patterns != expected {\n\t\tt.Errorf(\"Expected %q, but got %q\", expected, Mcollective_patterns)\n\t}\n}\n\n// TestMcollectivePatternsEmptyString tests the Mcollective_patterns constant with an empty string.\nfunc TestMcollectivePatternsEmptyString(t *testing.T) {\n\texpected := \"\"\n\tif Mcollective_patterns == expected {\n\t\tt.Errorf(\"Expected non-empty string, but got %q\", Mcollective_patterns)\n\t}\n}\n\n// TestMcollectivePatternsTrailingWhitespace tests the Mcollective_patterns constant with trailing whitespace.\nfunc TestMcollectivePatternsTrailingWhitespace(t *testing.T) {\n\texpected := `# Remember, these can be multi-line events.\nMCOLLECTIVE ., [%{TIMESTAMP_ISO8601:timestamp} #%{POSINT:pid}\\]%{SPACE}%{LOGLEVEL:event_level}\n\nMCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:\n`\n\tMcollective_patterns += \" \"\n\tif Mcollective_patterns != expected {\n\t\tt.Errorf(\"Expected %q, but got %q\", expected, Mcollective_patterns)\n\t}\n}\n\n// TestMcollectivePatternsLeadingWhitespace tests the Mcollective_patterns constant with leading whitespace.\nfunc TestMcollectivePatternsLeadingWhitespace(t *testing.T) {\n\texpected := `# Remember, these can be multi-line events.\nMCOLLECTIVE ., [%{TIMESTAMP_ISO8601:timestamp} #%{POSINT:pid}\\]%{SPACE}%{LOGLEVEL:event_level}\n\nMCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:`\n\tMcollective_patterns = \" \" + Mcollective_patterns\n\tif Mcollective_patterns != expected {\n\t\tt.Errorf(\"Expected %q, but got %q\", expected, Mcollective_patterns)\n\t}\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test -v static/grok_vjeantet/mcollective-patterns_test.go"
+}

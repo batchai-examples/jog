@@ -1,0 +1,27 @@
+{
+    "path": "static/grok_vjeantet/postgresql.go",
+    "model_usage_metrics": {
+        "Duration": 7568025337,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/grok_vjeantet/postgresql_test.go",
+    "existing_test_code": "",
+    "original_code": "package grok_vjeantet \n\nconst (\n  // Postgresql ...\n  Postgresql string = `# Default postgresql pg_log format pattern\nPOSTGRESQL %{DATESTAMP:timestamp} %{TZ} %{DATA:user_id} %{GREEDYDATA:connection_id} %{POSINT:pid}\n\n`\n)\n",
+    "test_code": "package grok_vjeantet\n\nimport (\n\t\"testing\"\n)\n\n// TestPostgresqlHappyPath tests the Postgresql constant with a valid pattern.\nfunc TestPostgresqlHappyPath(t *testing.T) {\n\texpected := `# Default postgresql pg_log format pattern\nPOSTGRESQL %{DATESTAMP:timestamp} %{TZ} %{DATA:user_id} %{GREEDYDATA:connection_id} %{POSINT:pid}\n\n`\n\tif Postgresql != expected {\n\t\tt.Errorf(\"Expected %q, got %q\", expected, Postgresql)\n\t}\n}\n\n// TestPostgresqlEmptyString tests the Postgresql constant with an empty string.\nfunc TestPostgresqlEmptyString(t *testing.T) {\n\texpected := \"\"\n\tif Postgresql == expected {\n\t\tt.Errorf(\"Expected not to be %q, got %q\", expected, Postgresql)\n\t}\n}\n\n// TestPostgresqlInvalidPattern tests the Postgresql constant with an invalid pattern.\nfunc TestPostgresqlInvalidPattern(t *testing.T) {\n\texpected := `# Default postgresql pg_log format pattern\nPOSTGRESQL %{DATESTAMP:timestamp} %{TZ} %{DATA:user_id} %{GREEDYDATA:connection_id} %{POSINT:pid}\nINVALID_PATTERN\n`\n\tif Postgresql == expected {\n\t\tt.Errorf(\"Expected not to be %q, got %q\", expected, Postgresql)\n\t}\n}\n\n// TestPostgresqlWhitespacePattern tests the Postgresql constant with a pattern containing only whitespace.\nfunc TestPostgresqlWhitespacePattern(t *testing.T) {\n\texpected := \"   \"\n\tif Postgresql == expected {\n\t\tt.Errorf(\"Expected not to be %q, got %q\", expected, Postgresql)\n\t}\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test -v static/grok_vjeantet/postgresql_test.go"
+}

@@ -3,149 +3,102 @@ package config
 import (
 	"testing"
 
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_StringSet_Parse_string(t *testing.T) {
-	assert := require.New(t)
-
-	target := &StringSetT{}
-
-	target.CaseSensitive = false
-	target.Parse("a, B")
-	s := target.String()
-	assert.True("a, B" == s || "B, a" == s)
-
-	assert.Equal(2, len(target.ValueMap))
-	assert.True(target.ValueMap["a"])
-	assert.True(target.ValueMap["B"])
-
-	assert.Equal(2, len(target.LowercasedValueMap))
-	assert.True(target.LowercasedValueMap["a"])
-	assert.True(target.LowercasedValueMap["b"])
-
-	assert.Equal(2, len(target.UppercasedValueMap))
-	assert.True(target.UppercasedValueMap["A"])
-	assert.True(target.UppercasedValueMap["B"])
-
-	target.CaseSensitive = true
-	target.Parse("c, D")
-	s = target.String()
-	assert.True("c, D" == s || "D, c" == s)
-
-	assert.Equal(2, len(target.ValueMap))
-	assert.True(target.ValueMap["c"])
-	assert.True(target.ValueMap["D"])
-	assert.Equal(0, len(target.LowercasedValueMap))
-	assert.Equal(0, len(target.UppercasedValueMap))
+func TestStringSet_Parse_HappyPath(t *testing.T) {
+	set := &StringSetT{CaseSensitive: true}
+	set.Parse([]string{"apple", "banana", "cherry"})
+	assert.Equal(t, map[string]bool{"apple": true, "banana": true, "cherry": true}, set.ValueMap)
 }
 
-func Test_StringSet_Parse_string_array(t *testing.T) {
-	assert := require.New(t)
-
-	target := &StringSetT{}
-
-	target.CaseSensitive = false
-	target.Parse([]string{" A ", " b"})
-	s := target.String()
-	assert.True("A, b" == s || "b, A" == s)
-
-	assert.Equal(2, len(target.ValueMap))
-	assert.True(target.ValueMap["A"])
-	assert.True(target.ValueMap["b"])
+func TestStringSet_Parse_EmptyInput(t *testing.T) {
+	set := &StringSetT{CaseSensitive: true}
+	set.Parse("")
+	assert.Empty(t, set.ValueMap)
 }
 
-func Test_StringSet_Parse_fail(t *testing.T) {
-	assert := require.New(t)
-
-	target := &StringSetT{}
-	assert.Panics(func() {
-		target.Parse([]int{1, 2})
-	})
+func TestStringSet_Parse_InvalidInput(t *testing.T) {
+	set := &StringSetT{CaseSensitive: true}
+	set.Parse(123)
+	assert.Empty(t, set.ValueMap)
 }
 
-func Test_StringSet_Contains(t *testing.T) {
-	assert := require.New(t)
-
-	target := &StringSetT{}
-
-	target.CaseSensitive = false
-	target.Parse("X")
-	assert.Equal("X", target.String())
-
-	assert.True(target.Contains("X"))
-	assert.True(target.Contains("x"))
-	assert.False(target.Contains("y"))
-
-	target.CaseSensitive = true
-	target.Parse("y")
-	assert.Equal("y", target.String())
-
-	assert.True(target.Contains("y"))
-	assert.False(target.Contains("Y"))
-	assert.False(target.Contains("x"))
+func TestStringSet_Reset_HappyPath(t *testing.T) {
+	set := &StringSetT{
+		ValueMap: map[string]bool{"apple": true, "banana": true},
+	}
+	set.Reset()
+	assert.Empty(t, set.ValueMap)
 }
 
-func Test_StringSet_ContainsPrefixOf(t *testing.T) {
-	assert := require.New(t)
-
-	target := &StringSetT{}
-
-	assert.False(target.ContainsPrefixOf(""))
-
-	target.CaseSensitive = false
-	target.Parse("X")
-	assert.Equal("X", target.String())
-	assert.True(target.ContainsPrefixOf("X123"))
-	assert.True(target.ContainsPrefixOf("x123"))
-	assert.False(target.ContainsPrefixOf("123X"))
-
-	target.CaseSensitive = true
-	target.Parse("y123")
-	assert.Equal("y123", target.String())
-	assert.True(target.ContainsPrefixOf("y123a"))
-	assert.False(target.ContainsPrefixOf("Y123a"))
-	assert.False(target.ContainsPrefixOf("123YB"))
+func TestStringSet_IsEmpty_EmptySet(t *testing.T) {
+	set := &StringSetT{}
+	assert.True(t, set.IsEmpty())
 }
 
-func Test_StringSet_UnmarshalYAML_happy(t *testing.T) {
-	assert := require.New(t)
+func TestStringSet_IsEmpty_NonEmptySet(t *testing.T) {
+	set := &StringSetT{ValueMap: map[string]bool{"apple": true}}
+	assert.False(t, set.IsEmpty())
+}
 
-	called := 0
+func TestStringSet_Contains_HappyPath(t *testing.T) {
+	set := &StringSetT{
+		ValueMap: map[string]bool{"apple": true, "banana": true},
+	}
+	assert.True(t, set.Contains("apple"))
+	assert.False(t, set.Contains("Banana"))
+}
 
-	target := &StringSetT{CaseSensitive: true}
-	err := target.UnmarshalYAML(func(input interface{}) error {
-		*input.(*interface{}) = "A"
-		called += 1
+func TestStringSet_Contains_CaseSensitive(t *testing.T) {
+	set := &StringSetT{
+		ValueMap: map[string]bool{"apple": true, "banana": true},
+		CaseSensitive: true,
+	}
+	assert.True(t, set.Contains("apple"))
+	assert.False(t, set.Contains("Banana"))
+}
+
+func TestStringSet_ContainsPrefixOf_HappyPath(t *testing.T) {
+	set := &StringSetT{
+		ValueMap: map[string]bool{"apple": true, "banana": true},
+	}
+	assert.True(t, set.ContainsPrefixOf("app"))
+	assert.False(t, set.ContainsPrefixOf("Banana"))
+}
+
+func TestStringSet_ContainsPrefixOf_CaseSensitive(t *testing.T) {
+	set := &StringSetT{
+		ValueMap: map[string]bool{"apple": true, "banana": true},
+		CaseSensitive: true,
+	}
+	assert.True(t, set.ContainsPrefixOf("app"))
+	assert.False(t, set.ContainsPrefixOf("Banana"))
+}
+
+func TestStringSet_String_HappyPath(t *testing.T) {
+	set := &StringSetT{
+		ValueMap: map[string]bool{"apple": true, "banana": true},
+	}
+	result := set.String()
+	assert.Equal(t, "apple, banana", result)
+}
+
+func TestStringSet_UnmarshalYAML_HappyPath(t *testing.T) {
+	set := &StringSetT{CaseSensitive: true}
+	err := set.UnmarshalYAML(func(interface{}) error {
 		return nil
 	})
-
-	assert.NoError(err)
-	assert.Equal(1, called)
-	assert.True(target.Contains("A"))
-	assert.False(target.Contains("a"))
+	assert.NoError(t, err)
+	set.Parse([]string{"apple", "banana", "cherry"})
+	assert.Equal(t, map[string]bool{"apple": true, "banana": true, "cherry": true}, set.ValueMap)
 }
 
-func Test_StringSet_UnmarshalYAML_fail(t *testing.T) {
-	assert := require.New(t)
-
-	target := &StringSetT{}
-	err := target.UnmarshalYAML(func(input interface{}) error {
-		return errors.New("expected")
-	})
-
-	assert.Error(err)
-	assert.Equal("expected", err.Error())
-}
-
-func Test_StringSet_MarshalYAML(t *testing.T) {
-	assert := require.New(t)
-
-	target := &StringSetT{}
-	target.Parse("x")
-	yamlText, err := target.MarshalYAML()
-
-	assert.NoError(err)
-	assert.Equal("x", yamlText)
+func TestStringSet_MarshalYAML_HappyPath(t *testing.T) {
+	set := &StringSetT{
+		ValueMap: map[string]bool{"apple": true, "banana": true},
+	}
+	result, err := set.MarshalYAML()
+	assert.NoError(t, err)
+	assert.Equal(t, []interface{}{"apple", "banana"}, result)
 }

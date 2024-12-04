@@ -1,0 +1,27 @@
+{
+    "path": "static/grok_vjeantet/java.go",
+    "model_usage_metrics": {
+        "Duration": 14399117093,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/grok_vjeantet/java_test.go",
+    "existing_test_code": "",
+    "original_code": "package grok_vjeantet \n\nconst (\n  // Java ...\n  Java string = `JAVACLASS (?:[a-zA-Z$_][a-zA-Z$_0-9]*\\.)*[a-zA-Z$_][a-zA-Z$_0-9]*\n#Space is an allowed character to match special cases like 'Native Method' or 'Unknown Source'\nJAVAFILE (?:[A-Za-z0-9_. -]+)\n#Allow special \u003cinit\u003e method\nJAVAMETHOD (?:(\u003cinit\u003e)|[a-zA-Z$_][a-zA-Z$_0-9]*)\n#Line number is optional in special cases 'Native method' or 'Unknown source'\nJAVASTACKTRACEPART %{SPACE}at %{JAVACLASS:class}\\.%{JAVAMETHOD:method}\\(%{JAVAFILE:file}(?::%{NUMBER:line})?\\)\n# Java Logs\nJAVATHREAD (?:[A-Z]{2}-Processor[\\d]+)\nJAVACLASS (?:[a-zA-Z0-9-]+\\.)+[A-Za-z0-9$]+\nJAVAFILE (?:[A-Za-z0-9_.-]+)\nJAVASTACKTRACEPART at %{JAVACLASS:class}\\.%{WORD:method}\\(%{JAVAFILE:file}:%{NUMBER:line}\\)\nJAVALOGMESSAGE (.*)\n# MMM dd, yyyy HH:mm:ss eg: Jan 9, 2014 7:13:13 AM\nCATALINA_DATESTAMP %{MONTH} %{MONTHDAY}, 20%{YEAR} %{HOUR}:?%{MINUTE}(?::?%{SECOND}) (?:AM|PM)\n# yyyy-MM-dd HH:mm:ss,SSS ZZZ eg: 2014-01-09 17:32:25,527 -0800\nTOMCAT_DATESTAMP 20%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{HOUR}:?%{MINUTE}(?::?%{SECOND}) %{ISO8601_TIMEZONE}\nCATALINALOG %{CATALINA_DATESTAMP:timestamp} %{JAVACLASS:class} %{JAVALOGMESSAGE:logmessage}\n# 2014-01-09 20:03:28,269 -0800 | ERROR | com.example.service.ExampleService - something compeletely unexpected happened...\nTOMCATLOG %{TOMCAT_DATESTAMP:timestamp} \\| %{LOGLEVEL:level} \\| %{JAVACLASS:class} - %{JAVALOGMESSAGE:logmessage}\n`\n)\n",
+    "test_code": "package grok_vjeantet\n\nimport (\n\t\"testing\"\n)\n\nfunc TestJavaRegex(t *testing.T) {\n\ttests := []struct {\n\t\tname     string\n\t\tinput    string\n\t\texpected bool\n\t}{\n\t\t{\n\t\t\tname:     \"Happy path with Java stack trace\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM at com.example.service.ExampleService.method(com.example.service.ExampleService.java:123)\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tname:     \"Happy path with Java log message\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM com.example.service.ExampleService - something completely unexpected happened...\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tname:     \"Negative case: Missing class name in stack trace\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM at .method(com.example.service.ExampleService.java:123)\",\n\t\t\texpected: false,\n\t\t},\n\t\t{\n\t\t\tname:     \"Negative case: Missing method name in stack trace\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM at com.example.service.ExampleService.(com.example.service.ExampleService.java:123)\",\n\t\t\texpected: false,\n\t\t},\n\t\t{\n\t\t\tname:     \"Negative case: Missing file name in stack trace\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM at com.example.service.ExampleService.method(com.example.service..java:123)\",\n\t\t\texpected: false,\n\t\t},\n\t\t{\n\t\t\tname:     \"Negative case: Missing line number in stack trace\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM at com.example.service.ExampleService.method(com.example.service.ExampleService.java::)\",\n\t\t\texpected: false,\n\t\t},\n\t\t{\n\t\t\tname:     \"Negative case: Invalid date format in stack trace\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 PM at com.example.service.ExampleService.method(com.example.service.ExampleService.java:123)\",\n\t\t\texpected: false,\n\t\t},\n\t\t{\n\t\t\tname:     \"Negative case: Invalid log level in log message\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM | INVALID | com.example.service.ExampleService - something completely unexpected happened...\",\n\t\t\texpected: false,\n\t\t},\n\t\t{\n\t\t\tname:     \"Corner case: Empty input string\",\n\t\t\tinput:    \"\",\n\t\t\texpected: false,\n\t\t},\n\t\t{\n\t\t\tname:     \"Corner case: Only date stamp in stack trace\",\n\t\t\tinput:    \"Jan 9, 2014 7:13:13 AM\",\n\t\t\texpected: false,\n\t\t},\n\t}\n\n\tfor _, tt := range tests {\n\t\tt.Run(tt.name, func(t *testing.T) {\n\t\t\tresult := JavaRegex.MatchString(tt.input)\n\t\t\tif result != tt.expected {\n\t\t\t\tt.Errorf(\"JavaRegex(%s) = %v; want %v\", tt.input, result, tt.expected)\n\t\t\t}\n\t\t})\n\t}\n}\n",
+    "amount_of_generated_test_cases": 10,
+    "single_test_run_command": "go test -v static/grok_vjeantet/java_test.go"
+}

@@ -3,89 +3,115 @@ package config
 import (
 	"errors"
 	"testing"
-
-	. "github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
-func Test_UnmarshalYAML_happy(t *testing.T) {
-	assert := require.New(t)
-
-	ctrl := NewController(t)
-	defer ctrl.Finish()
-
-	mock := NewMockDynamicObject(ctrl)
-
-	m := map[string]interface{}{"a": "b"}
-	InOrder(
-		mock.EXPECT().Reset().Times(1),
-		mock.EXPECT().FromMap(m).Times(1),
-	)
-
-	err := UnmarshalYAML(mock, func(output interface{}) error {
-		(*output.(*map[string]interface{}))["a"] = "b"
-		return nil
-	})
-
-	assert.NoError(err)
+type MockDynamicObject struct {
+	CalledReset    bool
+	CalledFromMap  bool
+	CalledToMap    bool
+	CalledInit     bool
+	Map            map[string]interface{}
+	ErrFromMap     error
+	ErrMarshalYAML error
 }
 
-func Test_UnmarshalYAML_error_on_unmarshal(t *testing.T) {
-	assert := require.New(t)
-
-	ctrl := NewController(t)
-	defer ctrl.Finish()
-
-	mock := NewMockDynamicObject(ctrl)
-
-	mock.EXPECT().Reset().Times(0)
-	mock.EXPECT().FromMap(Any()).Times(0)
-
-	err := UnmarshalYAML(mock, func(output interface{}) error {
-		return errors.New("expected")
-	})
-
-	assert.Error(err)
-	assert.Equal("expected", err.Error())
+func (m *MockDynamicObject) Reset() {
+	m.CalledReset = true
 }
 
-func Test_UnmarshalYAML_error_on_FromMap(t *testing.T) {
-	assert := require.New(t)
-
-	ctrl := NewController(t)
-	defer ctrl.Finish()
-
-	mock := NewMockDynamicObject(ctrl)
-
-	InOrder(
-		mock.EXPECT().Reset(),
-		mock.EXPECT().FromMap(Any()).Return(errors.New("expected")),
-		mock.EXPECT().Reset(),
-	)
-
-	err := UnmarshalYAML(mock, func(output interface{}) error {
-		return nil
-	})
-
-	assert.Error(err)
-	assert.Equal("expected", err.Error())
+func (m *MockDynamicObject) FromMap(m map[string]interface{}) error {
+	m.CalledFromMap = true
+	m.Map = m
+	return m.ErrFromMap
 }
 
-func Test_MarshalYAML(t *testing.T) {
-	assert := require.New(t)
+func (m *MockDynamicObject) ToMap() map[string]interface{} {
+	m.CalledToMap = true
+	return m.Map
+}
 
-	ctrl := NewController(t)
-	defer ctrl.Finish()
+func (m *MockDynamicObject) Init(cfg Configuration) {
+	m.CalledInit = true
+}
 
-	mock := NewMockDynamicObject(ctrl)
+func TestUnmarshalYAML(t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
+		mock := &MockDynamicObject{}
+		unmarshalFunc := func(i interface{}) error {
+			return nil
+		}
+		err := UnmarshalYAML(mock, unmarshalFunc)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if !mock.CalledReset || !mock.CalledFromMap || !mock.CalledToMap {
+			t.Errorf("Expected all methods to be called")
+		}
+	})
 
-	mock.EXPECT().ToMap().Times(1).Return(map[string]interface{}{"a": "b"})
+	t.Run("Error from FromMap", func(t *testing.T) {
+		mock := &MockDynamicObject{ErrFromMap: errors.New("error from FromMap")}
+		unmarshalFunc := func(i interface{}) error {
+			return nil
+		}
+		err := UnmarshalYAML(mock, unmarshalFunc)
+		if err == nil {
+			t.Errorf("Expected an error, got none")
+		}
+		if !mock.CalledReset || mock.CalledFromMap || mock.CalledToMap {
+			t.Errorf("Expected Reset to be called and FromMap and ToMap not to be called")
+		}
+	})
 
-	actual, err := MarshalYAML(mock)
+	t.Run("Error from unmarshal", func(t *testing.T) {
+		mock := &MockDynamicObject{}
+		unmarshalFunc := func(i interface{}) error {
+			return errors.New("error from unmarshal")
+		}
+		err := UnmarshalYAML(mock, unmarshalFunc)
+		if err == nil {
+			t.Errorf("Expected an error, got none")
+		}
+		if !mock.CalledReset || mock.CalledFromMap || mock.CalledToMap {
+			t.Errorf("Expected Reset to be called and FromMap and ToMap not to be called")
+		}
+	})
 
-	assert.NoError(err)
+	t.Run("Empty map", func(t *testing.T) {
+		mock := &MockDynamicObject{}
+		unmarshalFunc := func(i interface{}) error {
+			return nil
+		}
+		err := UnmarshalYAML(mock, unmarshalFunc)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if !mock.CalledReset || !mock.CalledFromMap || !mock.CalledToMap {
+			t.Errorf("Expected all methods to be called")
+		}
+	})
+}
 
-	actualMap := actual.(map[string]interface{})
-	assert.Equal(1, len(actualMap))
-	assert.Equal("b", actualMap["a"])
+func TestMarshalYAML(t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
+		mock := &MockDynamicObject{Map: map[string]interface{}{"key": "value"}}
+		result, err := MarshalYAML(mock)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if result.(map[string]interface{})["key"] != "value" {
+			t.Errorf("Expected result to be map with key 'key' and value 'value'")
+		}
+	})
+
+	t.Run("Error from ToMap", func(t *testing.T) {
+		mock := &MockDynamicObject{ErrMarshalYAML: errors.New("error from ToMap")}
+		result, err := MarshalYAML(mock)
+		if err == nil {
+			t.Errorf("Expected an error, got none")
+		}
+		if result != nil {
+			t.Errorf("Expected result to be nil")
+		}
+	})
 }

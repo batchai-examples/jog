@@ -1,0 +1,27 @@
+{
+    "path": "config/dynamic_object.go",
+    "model_usage_metrics": {
+        "Duration": 16803077220,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "config/dynamic_object_test.go",
+    "existing_test_code": "",
+    "original_code": "package config\n\n// DynamicObject ...\ntype DynamicObject interface {\n\tReset()\n\tFromMap(m map[string]interface{}) error\n\tToMap() map[string]interface{}\n\tInit(cfg Configuration)\n}\n\n// UnmarshalYAML ...\nfunc UnmarshalYAML(i DynamicObject, unmarshal func(interface{}) error) error {\n\tm := make(map[string]interface{})\n\terr := unmarshal(\u0026m)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\ti.Reset()\n\terr = i.FromMap(m)\n\tif err != nil {\n\t\ti.Reset()\n\t}\n\n\t//TODO: check to ensure len(m) == 0, that is, no unknown keys left\n\n\treturn err\n}\n\n// MarshalYAML ...\nfunc MarshalYAML(i DynamicObject) (interface{}, error) {\n\treturn i.ToMap(), nil\n}\n",
+    "test_code": "package config\n\nimport (\n\t\"errors\"\n\t\"testing\"\n)\n\ntype MockDynamicObject struct {\n\tCalledReset    bool\n\tCalledFromMap  bool\n\tCalledToMap    bool\n\tCalledInit     bool\n\tMap            map[string]interface{}\n\tErrFromMap     error\n\tErrMarshalYAML error\n}\n\nfunc (m *MockDynamicObject) Reset() {\n\tm.CalledReset = true\n}\n\nfunc (m *MockDynamicObject) FromMap(m map[string]interface{}) error {\n\tm.CalledFromMap = true\n\tm.Map = m\n\treturn m.ErrFromMap\n}\n\nfunc (m *MockDynamicObject) ToMap() map[string]interface{} {\n\tm.CalledToMap = true\n\treturn m.Map\n}\n\nfunc (m *MockDynamicObject) Init(cfg Configuration) {\n\tm.CalledInit = true\n}\n\nfunc TestUnmarshalYAML(t *testing.T) {\n\tt.Run(\"Happy Path\", func(t *testing.T) {\n\t\tmock := \u0026MockDynamicObject{}\n\t\tunmarshalFunc := func(i interface{}) error {\n\t\t\treturn nil\n\t\t}\n\t\terr := UnmarshalYAML(mock, unmarshalFunc)\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got %v\", err)\n\t\t}\n\t\tif !mock.CalledReset || !mock.CalledFromMap || !mock.CalledToMap {\n\t\t\tt.Errorf(\"Expected all methods to be called\")\n\t\t}\n\t})\n\n\tt.Run(\"Error from FromMap\", func(t *testing.T) {\n\t\tmock := \u0026MockDynamicObject{ErrFromMap: errors.New(\"error from FromMap\")}\n\t\tunmarshalFunc := func(i interface{}) error {\n\t\t\treturn nil\n\t\t}\n\t\terr := UnmarshalYAML(mock, unmarshalFunc)\n\t\tif err == nil {\n\t\t\tt.Errorf(\"Expected an error, got none\")\n\t\t}\n\t\tif !mock.CalledReset || mock.CalledFromMap || mock.CalledToMap {\n\t\t\tt.Errorf(\"Expected Reset to be called and FromMap and ToMap not to be called\")\n\t\t}\n\t})\n\n\tt.Run(\"Error from unmarshal\", func(t *testing.T) {\n\t\tmock := \u0026MockDynamicObject{}\n\t\tunmarshalFunc := func(i interface{}) error {\n\t\t\treturn errors.New(\"error from unmarshal\")\n\t\t}\n\t\terr := UnmarshalYAML(mock, unmarshalFunc)\n\t\tif err == nil {\n\t\t\tt.Errorf(\"Expected an error, got none\")\n\t\t}\n\t\tif !mock.CalledReset || mock.CalledFromMap || mock.CalledToMap {\n\t\t\tt.Errorf(\"Expected Reset to be called and FromMap and ToMap not to be called\")\n\t\t}\n\t})\n\n\tt.Run(\"Empty map\", func(t *testing.T) {\n\t\tmock := \u0026MockDynamicObject{}\n\t\tunmarshalFunc := func(i interface{}) error {\n\t\t\treturn nil\n\t\t}\n\t\terr := UnmarshalYAML(mock, unmarshalFunc)\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got %v\", err)\n\t\t}\n\t\tif !mock.CalledReset || !mock.CalledFromMap || !mock.CalledToMap {\n\t\t\tt.Errorf(\"Expected all methods to be called\")\n\t\t}\n\t})\n}\n\nfunc TestMarshalYAML(t *testing.T) {\n\tt.Run(\"Happy Path\", func(t *testing.T) {\n\t\tmock := \u0026MockDynamicObject{Map: map[string]interface{}{\"key\": \"value\"}}\n\t\tresult, err := MarshalYAML(mock)\n\t\tif err != nil {\n\t\t\tt.Errorf(\"Expected no error, got %v\", err)\n\t\t}\n\t\tif result.(map[string]interface{})[\"key\"] != \"value\" {\n\t\t\tt.Errorf(\"Expected result to be map with key 'key' and value 'value'\")\n\t\t}\n\t})\n\n\tt.Run(\"Error from ToMap\", func(t *testing.T) {\n\t\tmock := \u0026MockDynamicObject{ErrMarshalYAML: errors.New(\"error from ToMap\")}\n\t\tresult, err := MarshalYAML(mock)\n\t\tif err == nil {\n\t\t\tt.Errorf(\"Expected an error, got none\")\n\t\t}\n\t\tif result != nil {\n\t\t\tt.Errorf(\"Expected result to be nil\")\n\t\t}\n\t})\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test -v config/dynamic_object_test.go"
+}

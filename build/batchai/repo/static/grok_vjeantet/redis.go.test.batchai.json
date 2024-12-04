@@ -1,0 +1,27 @@
+{
+    "path": "static/grok_vjeantet/redis.go",
+    "model_usage_metrics": {
+        "Duration": 7067890525,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/grok_vjeantet/redis_test.go",
+    "existing_test_code": "",
+    "original_code": "package grok_vjeantet \n\nconst (\n  // Redis ...\n  Redis string = `REDISTIMESTAMP %{MONTHDAY} %{MONTH} %{TIME}\nREDISLOG \\[%{POSINT:pid}\\] %{REDISTIMESTAMP:timestamp} \\* \n\n`\n)\n",
+    "test_code": "package grok_vjeantet\n\nimport (\n\t\"testing\"\n)\n\n// TestRedisHappyPath tests the Redis constant with a valid log entry.\nfunc TestRedisHappyPath(t *testing.T) {\n\texpected := `REDISTIMESTAMP %{MONTHDAY} %{MONTH} %{TIME}\nREDISLOG \\[%{POSINT:pid}\\] %{REDISTIMESTAMP:timestamp} \\* \n\n`\n\tresult := Redis\n\tif result != expected {\n\t\tt.Errorf(\"Expected %s, got %s\", expected, result)\n\t}\n}\n\n// TestRedisNegativePath tests the Redis constant with an invalid log entry.\nfunc TestRedisNegativePath(t *testing.T) {\n\texpected := `INVALIDLOG %{MONTHDAY} %{MONTH} %{TIME}\nINVALIDLOG \\[%{POSINT:pid}\\] %{REDISTIMESTAMP:timestamp} \\* \n\n`\n\tresult := Redis\n\tif result == expected {\n\t\tt.Errorf(\"Expected %s, got %s\", expected, result)\n\t}\n}\n\n// TestRedisCornerCase tests the Redis constant with an empty log entry.\nfunc TestRedisCornerCase(t *testing.T) {\n\texpected := `\n\n`\n\tresult := Redis\n\tif result != expected {\n\t\tt.Errorf(\"Expected %s, got %s\", expected, result)\n\t}\n}\n\n// TestRedisEmptyString tests the Redis constant with an empty string.\nfunc TestRedisEmptyString(t *testing.T) {\n\texpected := \"\"\n\tresult := Redis\n\tif result == expected {\n\t\tt.Errorf(\"Expected %s, got %s\", expected, result)\n\t}\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test -v static/grok_vjeantet/redis_test.go"
+}

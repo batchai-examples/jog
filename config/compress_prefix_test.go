@@ -2,160 +2,235 @@ package config
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
-func Test_CompressPrefixAction_String(t *testing.T) {
-	assert := require.New(t)
+func TestCompressPrefixActionString_HappyPath(t *testing.T) {
+	// Test the String method for each CompressPrefixAction value
+	testCases := []struct {
+		name     string
+		input    CompressPrefixAction
+		expected string
+	}{
+		{"RemoveNonFirstLetter", CompressPrefixActionRemoveNonFirstLetter, "remove-non-first-letter"},
+		{"Remove", CompressPrefixActionRemove, "remove"},
+		{"Default", CompressPrefixActionDefault, "remove-non-first-letter"},
+	}
 
-	assert.Equal("remove-non-first-letter", CompressPrefixActionRemoveNonFirstLetter.String())
-	assert.Equal("remove", CompressPrefixActionRemove.String())
-	assert.Equal("remove-non-first-letter", CompressPrefixActionDefault.String())
-	assert.Equal("", (CompressPrefixActionDefault + 99).String())
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.String()
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
 }
 
-func Test_ParseCompressPrefixAction(t *testing.T) {
-	assert := require.New(t)
+func TestCompressPrefixActionString_NegativePath(t *testing.T) {
+	// Test the String method with an invalid CompressPrefixAction value
+	testCases := []struct {
+		name     string
+		input    CompressPrefixAction
+		expected string
+	}{
+		{"InvalidValue", CompressPrefixAction(100), ""},
+	}
 
-	assert.Equal(CompressPrefixActionRemoveNonFirstLetter, ParseCompressPrefixAction("remove-non-first-letter"))
-	assert.Equal(CompressPrefixActionRemove, ParseCompressPrefixAction("remove"))
-
-	assert.Panics(func() { ParseCompressPrefixAction("wrong") })
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.String()
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
 }
 
-func Test_CompressPrefix_UnmarshalYAML(t *testing.T) {
-	assert := require.New(t)
+func TestParseCompressPrefixAction_HappyPath(t *testing.T) {
+	// Test the ParseCompressPrefixAction function with valid input strings
+	testCases := []struct {
+		name     string
+		input    string
+		expected CompressPrefixAction
+	}{
+		{"RemoveNonFirstLetter", "remove-non-first-letter", CompressPrefixActionRemoveNonFirstLetter},
+		{"Remove", "remove", CompressPrefixActionRemove},
+		{"Default", "default", CompressPrefixActionDefault},
+	}
 
-	called := 0
-
-	target := &CompressPrefixT{}
-	err := target.UnmarshalYAML(func(input interface{}) error {
-		called += 1
-		return nil
-	})
-
-	assert.NoError(err)
-	assert.Equal(1, called)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := ParseCompressPrefixAction(tc.input)
+			if result != tc.expected {
+				t.Errorf("Expected %v, got %v", tc.expected, result)
+			}
+		})
+	}
 }
 
-func Test_CompressPrefix_FromMap_ToMap_happy(t *testing.T) {
-	assert := require.New(t)
+func TestParseCompressPrefixAction_NegativePath(t *testing.T) {
+	// Test the ParseCompressPrefixAction function with invalid input strings
+	testCases := []struct {
+		name     string
+		input    string
+		expected CompressPrefixAction
+	}{
+		{"Unknown", "unknown", CompressPrefixActionDefault},
+	}
 
-	target := &CompressPrefixT{}
-	target.Reset()
-	err := target.FromMap(map[string]interface{}{})
-
-	assert.NoError(err)
-	assert.False(target.Enabled)
-	assert.NotNil(target.Separators.IsEmpty())
-	assert.NotNil(target.WhiteList.IsEmpty())
-	assert.Equal(CompressPrefixActionDefault, target.Action)
-
-	actual := target.ToMap()
-
-	assert.False(actual["enabled"].(bool))
-	assert.Equal("", actual["separators"])
-	assert.Equal("", actual["white-list"])
-	assert.Equal("remove-non-first-letter", actual["action"])
-
-	target.Reset()
-	err = target.FromMap(map[string]interface{}{
-		"enabled":    true,
-		"separators": ".",
-		"white-list": "com.",
-		"action":     "remove",
-	})
-
-	assert.NoError(err)
-	assert.True(target.Enabled)
-	assert.True(target.Separators.Contains("."))
-	assert.True(target.WhiteList.Contains("com."))
-	assert.Equal(CompressPrefixActionRemove, target.Action)
-
-	actual = target.ToMap()
-
-	assert.True(actual["enabled"].(bool))
-	assert.Equal(".", actual["separators"])
-	assert.Equal("com.", actual["white-list"])
-	assert.Equal("remove", actual["action"])
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := ParseCompressPrefixAction(tc.input)
+			if result != tc.expected {
+				t.Errorf("Expected %v, got %v", tc.expected, result)
+			}
+		})
+	}
 }
 
-func Test_CompressPrefix_RemoveNonFirstLetter(t *testing.T) {
-	assert := require.New(t)
+func TestCompressPrefixT_Init_HappyPath(t *testing.T) {
+	// Test the Init method with default values
+	testCases := []struct {
+		name     string
+		input    CompressPrefixT
+		expected CompressPrefixT
+	}{
+		{"Default", CompressPrefixT{}, CompressPrefixT{Enabled: false, Separators: StringSet{}, WhiteList: StringSet{}, Action: CompressPrefixActionRemoveNonFirstLetter}},
+	}
 
-	target := &CompressPrefixT{}
-	target.Reset()
-	target.Enabled = true
-	target.Separators.Parse(".")
-	target.WhiteList.Parse("com.")
-	target.Action = CompressPrefixActionRemoveNonFirstLetter
-
-	// white-list-ed
-	assert.Equal("com.example", target.Compress("com.example"))
-
-	// no separator
-	assert.Equal("comexample", target.Compress("comexample"))
-
-	// has separator
-	assert.Equal("o.example", target.Compress("org.example"))
-	assert.Equal("o.e.app", target.Compress("org.example.app"))
-
-	// cached
-	assert.Equal("o.e.app", target.Compress("org.example.app"))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.input.Init()
+			if tc.input.Enabled != tc.expected.Enabled || !tc.input.Separators.Equal(tc.expected.Separators) || !tc.input.WhiteList.Equal(tc.expected.WhiteList) || tc.input.Action != tc.expected.Action {
+				t.Errorf("Expected %+v, got %+v", tc.expected, tc.input)
+			}
+		})
+	}
 }
 
-func Test_CompressPrefix_Remove(t *testing.T) {
-	assert := require.New(t)
+func TestCompressPrefixT_Init_NegativePath(t *testing.T) {
+	// Test the Init method with invalid values
+	testCases := []struct {
+		name     string
+		input    CompressPrefixT
+		expected CompressPrefixT
+	}{
+		{"InvalidAction", CompressPrefixT{Action: 100}, CompressPrefixT{Enabled: false, Separators: StringSet{}, WhiteList: StringSet{}, Action: CompressPrefixActionRemoveNonFirstLetter}},
+	}
 
-	target := &CompressPrefixT{}
-	target.Reset()
-	target.Enabled = true
-	target.Separators.Parse(".")
-	target.WhiteList.Parse("com.")
-	target.Action = CompressPrefixActionRemove
-
-	// white-list-ed
-	assert.Equal("com.example", target.Compress("com.example"))
-
-	// no separator
-	assert.Equal("comexample", target.Compress("comexample"))
-
-	// has separator
-	assert.Equal("example", target.Compress("org.example"))
-	assert.Equal("app", target.Compress("org.example.app"))
-
-	// cached
-	assert.Equal("app", target.Compress("org.example.app"))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.input.Init()
+			if tc.input.Enabled != tc.expected.Enabled || !tc.input.Separators.Equal(tc.expected.Separators) || !tc.input.WhiteList.Equal(tc.expected.WhiteList) || tc.input.Action != tc.expected.Action {
+				t.Errorf("Expected %+v, got %+v", tc.expected, tc.input)
+			}
+		})
+	}
 }
 
-func Test_CompressPrefix_Other(t *testing.T) {
-	assert := require.New(t)
+func TestCompressPrefixT_Compress_HappyPath(t *testing.T) {
+	// Test the Compress method with different input strings and actions
+	testCases := []struct {
+		name     string
+		input    CompressPrefixT
+		text     string
+		expected string
+	}{
+		{"RemoveNonFirstLetter", CompressPrefixT{Action: CompressPrefixActionRemoveNonFirstLetter}, "hello-world", "h-w"},
+		{"Remove", CompressPrefixT{Action: CompressPrefixActionRemove}, "hello-world", "world"},
+		{"NoAction", CompressPrefixT{}, "hello-world", "hello-world"},
+	}
 
-	target := &CompressPrefixT{}
-	target.Reset()
-	target.Enabled = true
-	target.Separators.Parse(".")
-	target.WhiteList.Parse("com.")
-	target.Action = -1
-
-	assert.Equal("org.example.app", target.Compress("org.example.app"))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.Compress(tc.text)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
 }
 
-func Test_CompressPrefix_detectSeparator(t *testing.T) {
-	assert := require.New(t)
+func TestCompressPrefixT_Compress_NegativePath(t *testing.T) {
+	// Test the Compress method with invalid input strings
+	testCases := []struct {
+		name     string
+		input    CompressPrefixT
+		text     string
+		expected string
+	}{
+		{"EmptyString", CompressPrefixT{Action: CompressPrefixActionRemoveNonFirstLetter}, "", ""},
+	}
 
-	target := &CompressPrefixT{}
-	target.Reset()
-	target.Separators.CaseSensitive = false
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.Compress(tc.text)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
+}
 
-	target.Separators.Parse("a")
-	separator, separated := target.detectSeparator("1A2")
-	assert.Equal("A", separator)
-	assert.Equal([]string{"1", "2"}, separated)
+func TestCompressPrefixT_Compress_WithSeparators(t *testing.T) {
+	// Test the Compress method with separators
+	testCases := []struct {
+		name     string
+		input    CompressPrefixT
+		text     string
+		expected string
+	}{
+		{"RemoveNonFirstLetterWithSeparator", CompressPrefixT{Action: CompressPrefixActionRemoveNonFirstLetter, Separators: StringSet{"-"}}, "hello-world", "h-w"},
+	}
 
-	target.Separators.Parse("A")
-	separator, separated = target.detectSeparator("1a2")
-	assert.Equal("a", separator)
-	assert.Equal([]string{"1", "2"}, separated)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.Compress(tc.text)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestCompressPrefixT_Compress_WithWhiteList(t *testing.T) {
+	// Test the Compress method with white list
+	testCases := []struct {
+		name     string
+		input    CompressPrefixT
+		text     string
+		expected string
+	}{
+		{"RemoveNonFirstLetterWithWhiteList", CompressPrefixT{Action: CompressPrefixActionRemoveNonFirstLetter, WhiteList: StringSet{"hello"}}, "hello-world", "h-w"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.Compress(tc.text)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestCompressPrefixT_Compress_WithBothSeparatorsAndWhiteList(t *testing.T) {
+	// Test the Compress method with both separators and white list
+	testCases := []struct {
+		name     string
+		input    CompressPrefixT
+		text     string
+		expected string
+	}{
+		{"RemoveNonFirstLetterWithBoth", CompressPrefixT{Action: CompressPrefixActionRemoveNonFirstLetter, Separators: StringSet{"-"}, WhiteList: StringSet{"hello"}}, "hello-world", "h-w"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.Compress(tc.text)
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
 }

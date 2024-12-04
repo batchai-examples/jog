@@ -1,134 +1,177 @@
 package util
 
 import (
-	"reflect"
+	"errors"
 	"testing"
 
-	"github.com/agiledragon/gomonkey/v2"
-	"github.com/gookit/color"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_ColorsFromLabel_happy(t *testing.T) {
-	require := require.New(t)
+func TestColorsFromLabel_HappyPath(t *testing.T) {
+	// Given a valid label with multiple color names separated by commas
+	label := "FgRed,BgGreen,OpBold"
 
-	r, err := ColorsFromLabel("Red")
-	require.NoError(err)
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
 
-	require.Equal(color.Red.Code(), r.Code())
-
-	r, err = ColorsFromLabel("Red, Green")
-	require.NoError(err)
-
-	require.Equal(2, len(r))
-	require.Equal(color.New(color.Red, color.Green).Code(), r.Code())
+	// Then no error should be returned and the style should contain the expected colors and options
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgRed|color.BgGreen|color.OpBold, style)
 }
 
-func Test_ColorsFromLabel_unknownLabel(t *testing.T) {
-	_, err := ColorsFromLabel("Red,Xyz")
-	require.Error(t, err)
+func TestColorsFromLabel_InvalidColorName(t *testing.T) {
+	// Given a label with an invalid color name
+	label := "FgRed,UnknownColor,BgGreen"
+
+	// When calling ColorsFromLabel with the given label
+	_, err := ColorsFromLabel(label)
+
+	// Then an error should be returned indicating that the unknown color name is not allowed
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown color name 'UnknownColor' in")
 }
 
-func Test_Color_Reset(t *testing.T) {
-	require := require.New(t)
+func TestColorsFromLabel_EmptyLabel(t *testing.T) {
+	// Given an empty label
+	label := ""
 
-	r := &ColorT{}
-	r.Reset()
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
 
-	require.Equal("FgDefault", r.label)
-	require.Equal(color.FgDefault, r.style[0])
+	// Then no error should be returned and the style should be reset to default
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgDefault, style)
 }
 
-func Test_Colors_Set_happy(t *testing.T) {
-	r := &ColorT{}
+func TestColorsFromLabel_SingleColor(t *testing.T) {
+	// Given a label with a single valid color name
+	label := "FgBlue"
 
-	r.Set("Green")
-	require.Equal(t, color.Green.Code(), r.style.Code())
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
+
+	// Then no error should be returned and the style should contain only the specified color
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgBlue, style)
 }
 
-func Test_Colors_Set_fail(t *testing.T) {
-	r := &ColorT{}
-	require.Panics(t, func() {
-		r.Set("wrong")
-	})
+func TestColorsFromLabel_MultipleOptions(t *testing.T) {
+	// Given a label with multiple options separated by commas
+	label := "OpBold,OpItalic"
+
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
+
+	// Then no error should be returned and the style should contain only the specified options
+	assert.NoError(t, err)
+	assert.Equal(t, color.OpBold|color.OpItalic, style)
 }
 
-func Test_Colors_UnmarshalYAML_happy(t *testing.T) {
-	require := require.New(t)
+func TestColorsFromLabel_MixedColorAndOption(t *testing.T) {
+	// Given a label with both valid color names and options separated by commas
+	label := "FgRed,OpBold"
 
-	r := &ColorT{}
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
 
-	err := yaml.Unmarshal([]byte("Blue"), &r)
-	require.NoError(err)
-
-	require.Equal(color.Blue.Code(), r.style.Code())
+	// Then no error should be returned and the style should contain the specified color and option
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgRed|color.OpBold, style)
 }
 
-func Test_Colors_UnmarshalYAML_failed_due_to_invalid_color(t *testing.T) {
-	require := require.New(t)
+func TestColorsFromLabel_LeadingTrailingSpaces(t *testing.T) {
+	// Given a label with leading and trailing spaces around valid color names
+	label := "  FgGreen,BgBlue  "
 
-	r := &ColorT{}
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
 
-	err := yaml.Unmarshal([]byte("RedWrong"), &r)
-	if err == nil {
-		require.FailNow("expect unmarchal failure but nothing happened")
-	}
-
-	require.Equal(color.FgDefault.Code(), r.style.Code())
+	// Then no error should be returned and the style should contain only the specified colors
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgGreen|color.BgBlue, style)
 }
 
-func Test_Colors_UnmarshalYAML_failed_due_to_invalid_yaml(t *testing.T) {
-	require := require.New(t)
+func TestColorsFromLabel_CommaOnly(t *testing.T) {
+	// Given a label with only commas
+	label := ","
 
-	r := &ColorT{}
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
 
-	err := yaml.Unmarshal([]byte("wrong:"), &r)
-	if err == nil {
-		require.FailNow("expect unmarchal failure but nothing happened")
-	}
-
-	require.Equal(color.FgDefault.Code(), r.style.Code())
+	// Then no error should be returned and the style should be reset to default
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgDefault, style)
 }
 
-func Test_Colors_MarshalYAML_happy(t *testing.T) {
-	require := require.New(t)
+func TestColorsFromLabel_SingleInvalidColorName(t *testing.T) {
+	// Given a label with a single invalid color name
+	label := "UnknownColor"
 
-	r := &ColorT{}
-	r.Set("Red,Green,Blue")
-	yamlText, err := r.MarshalYAML()
+	// When calling ColorsFromLabel with the given label
+	_, err := ColorsFromLabel(label)
 
-	require.NoError(err)
-	require.Equal("Red,Green,Blue", yamlText)
+	// Then an error should be returned indicating that the unknown color name is not allowed
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown color name 'UnknownColor' in")
 }
 
-func Test_Colors_Sprint(t *testing.T) {
-	assert := require.New(t)
+func TestColorsFromLabel_MultipleInvalidColorNames(t *testing.T) {
+	// Given a label with multiple invalid color names separated by commas
+	label := "UnknownColor1,UnknownColor2"
 
-	r := &ColorT{}
+	// When calling ColorsFromLabel with the given label
+	_, err := ColorsFromLabel(label)
 
-	patches := gomonkey.ApplyMethod(reflect.TypeOf(r.style), "Sprint", func(s color.Style, a ...interface{}) string {
-		assert.Equal("x", a[0])
-		return "called"
-	})
-	defer patches.Reset()
-
-	r.Set("Red")
-	assert.Equal("called", r.Sprint("x"))
+	// Then an error should be returned indicating that the unknown color names are not allowed
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown color name 'UnknownColor1' in")
+	assert.Contains(t, err.Error(), "unknown color name 'UnknownColor2' in")
 }
 
-func Test_Colors_Sprintf(t *testing.T) {
-	assert := require.New(t)
+func TestColorsFromLabel_EmptyString(t *testing.T) {
+	// Given an empty string as the label
+	label := ""
 
-	r := &ColorT{}
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
 
-	patches := gomonkey.ApplyMethod(reflect.TypeOf(r.style), "Sprintf", func(s color.Style, format string, a ...interface{}) string {
-		assert.Equal("%s", format)
-		assert.Equal("x", a[0])
-		return "called"
-	})
-	defer patches.Reset()
+	// Then no error should be returned and the style should be reset to default
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgDefault, style)
+}
 
-	r.Set("Red")
-	assert.Equal("called", r.Sprintf("%s", "x"))
+func TestColorsFromLabel_WhitespaceOnly(t *testing.T) {
+	// Given a string with only whitespace as the label
+	label := "   "
+
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
+
+	// Then no error should be returned and the style should be reset to default
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgDefault, style)
+}
+
+func TestColorsFromLabel_MixedCaseColorNames(t *testing.T) {
+	// Given a label with mixed case color names
+	label := "FgRed,bGgreen,OpBold"
+
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
+
+	// Then no error should be returned and the style should contain the expected colors and options
+	assert.NoError(t, err)
+	assert.Equal(t, color.FgRed|color.BgGreen|color.OpBold, style)
+}
+
+func TestColorsFromLabel_MixedCaseOptionNames(t *testing.T) {
+	// Given a label with mixed case option names
+	label := "Opbold,bGiTalic"
+
+	// When calling ColorsFromLabel with the given label
+	style, err := ColorsFromLabel(label)
+
+	// Then no error should be returned and the style should contain the expected options
+	assert.NoError(t, err)
+	assert.Equal(t, color.OpBold|color.OpItalic, style)
 }

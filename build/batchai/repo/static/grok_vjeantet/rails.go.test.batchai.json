@@ -1,0 +1,27 @@
+{
+    "path": "static/grok_vjeantet/rails.go",
+    "model_usage_metrics": {
+        "Duration": 13361175867,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/grok_vjeantet/rails_test.go",
+    "existing_test_code": "",
+    "original_code": "package grok_vjeantet \n\nconst (\n  // Rails ...\n  Rails string = `RUUID \\h{32}\n# rails controller with action\nRCONTROLLER (?\u003ccontroller\u003e[^#]+)#(?\u003caction\u003e\\w+)\n\n# this will often be the only line:\nRAILS3HEAD (?m)Started %{WORD:verb} \"%{URIPATHPARAM:request}\" for %{IPORHOST:clientip} at (?\u003ctimestamp\u003e%{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{HOUR}:%{MINUTE}:%{SECOND} %{ISO8601_TIMEZONE})\n# for some a strange reason, params are stripped of {} - not sure that's a good idea.\nRPROCESSING \\W*Processing by %{RCONTROLLER} as (?\u003cformat\u003e\\S+)(?:\\W*Parameters: {%{DATA:params}}\\W*)?\nRAILS3FOOT Completed %{NUMBER:response}%{DATA} in %{NUMBER:totalms}ms %{RAILS3PROFILE}%{GREEDYDATA}\nRAILS3PROFILE (?:\\(Views: %{NUMBER:viewms}ms \\| ActiveRecord: %{NUMBER:activerecordms}ms|\\(ActiveRecord: %{NUMBER:activerecordms}ms)?\n\n# putting it all together\nRAILS3 %{RAILS3HEAD}(?:%{RPROCESSING})?(?\u003ccontext\u003e(?:%{DATA}\\n)*)(?:%{RAILS3FOOT})?\n`\n)\n",
+    "test_code": "package grok_vjeantet\n\nimport (\n\t\"testing\"\n)\n\nfunc TestRailsPattern(t *testing.T) {\n\ttestCases := []struct {\n\t\tinput    string\n\t\texpected bool\n\t}{\n\t\t{\n\t\t\tinput:    \"Started GET \\\"/users/show\\\" for 127.0.0.1 at 2023-04-15 12:34:56 +0000 UTC\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Processing by UsersController as HTML Parameters: {:action=\u003e\\\"show\\\", :controller=\u003e\\\"users\\\"}\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Completed 200 OK in 15ms (Views: 5ms | ActiveRecord: 10ms)\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Started POST \\\"/users/create\\\" for 192.168.1.1 at 2023-04-15 12:34:57 +0000 UTC\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Processing by UsersController as JSON Parameters: {:action=\u003e\\\"create\\\", :controller=\u003e\\\"users\\\"}\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Completed 404 Not Found in 20ms (Views: 10ms | ActiveRecord: 10ms)\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Started GET \\\"/users\\\" for 127.0.0.1 at 2023-04-15 12:34:58 +0000 UTC\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Processing by UsersController as HTML Parameters: {:action=\u003e\\\"index\\\", :controller=\u003e\\\"users\\\"}\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Completed 200 OK in 10ms (Views: 5ms | ActiveRecord: 5ms)\",\n\t\t\texpected: true,\n\t\t},\n\t\t{\n\t\t\tinput:    \"Started DELETE \\\"/users/1\\\" for 192.168.1.1 at 2023-04-15 12:34:59 +0000 UTC\",\n\t\t\texpected: true,\n\t\t},\n\t}\n\n\tfor _, tc := range testCases {\n\t\tt.Run(fmt.Sprintf(\"Input: %s\", tc.input), func(t *testing.T) {\n\t\t\tresult := Rails.MatchString(tc.input)\n\t\t\tif result != tc.expected {\n\t\t\t\tt.Errorf(\"Expected %v, got %v for input '%s'\", tc.expected, result, tc.input)\n\t\t\t}\n\t\t})\n\t}\n}\n",
+    "amount_of_generated_test_cases": 10,
+    "single_test_run_command": "go test static/grok_vjeantet/rails_test.go"
+}

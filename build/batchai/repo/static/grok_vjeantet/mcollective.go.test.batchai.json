@@ -1,0 +1,27 @@
+{
+    "path": "static/grok_vjeantet/mcollective.go",
+    "model_usage_metrics": {
+        "Duration": 9588206100,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "static/grok_vjeantet/mcollective_test.go",
+    "existing_test_code": "",
+    "original_code": "package grok_vjeantet \n\nconst (\n  // Mcollective ...\n  Mcollective string = `MCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:\n`\n)\n",
+    "test_code": "package grok_vjeantet\n\nimport (\n\t\"testing\"\n)\n\n// TestMcollectiveHappyPath tests the Mcollective constant with a happy path scenario.\nfunc TestMcollectiveHappyPath(t *testing.T) {\n\texpected := `MCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:\n`\n\tif Mcollective != expected {\n\t\tt.Errorf(\"Expected %s, got %s\", expected, Mcollective)\n\t}\n}\n\n// TestMcollectivePositiveCase tests the Mcollective constant with a positive case scenario.\nfunc TestMcollectivePositiveCase(t *testing.T) {\n\texpected := `MCOLLECTIVEAUDIT %{TIMESTAMP_ISO8601:timestamp}:\n`\n\tif Mcollective != expected {\n\t\tt.Errorf(\"Expected %s, got %s\", expected, Mcollective)\n\t}\n}\n\n// TestMcollectiveNegativeCase tests the Mcollective constant with a negative case scenario.\nfunc TestMcollectiveNegativeCase(t *testing.T) {\n\texpected := `ANOTHER_VALUE`\n\tif Mcollective == expected {\n\t\tt.Errorf(\"Expected not to be %s\", expected)\n\t}\n}\n\n// TestMcollectiveCornerCase tests the Mcollective constant with a corner case scenario.\nfunc TestMcollectiveCornerCase(t *testing.T) {\n\texpected := \"\"\n\tif Mcollective != expected {\n\t\tt.Errorf(\"Expected %s, got %s\", expected, Mcollective)\n\t}\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test static/grok_vjeantet/mcollective_test.go"
+}

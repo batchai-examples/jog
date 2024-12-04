@@ -1,0 +1,27 @@
+{
+    "path": "config/enum_test.go",
+    "model_usage_metrics": {
+        "Duration": 16966698596,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "config/enum_test.go",
+    "existing_test_code": "",
+    "original_code": "package config\n\nimport (\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/require\"\n)\n\nfunc Test_Enum_FromMap_ToMap_happy(t *testing.T) {\n\tassert := require.New(t)\n\n\ttarget := \u0026EnumT{}\n\n\texpected := map[string]interface{}{\n\t\t\"alias\": \"k1, k2\",\n\t\t\"color\": \"Red\",\n\t}\n\terr := target.FromMap(expected)\n\n\tassert.NoError(err)\n\tassert.True(target.Alias.Contains(\"k1\", false))\n\tassert.True(target.Alias.Contains(\"k2\", false))\n\tassert.Equal(\"Red\", target.Color.String())\n\n\tactual := target.ToMap()\n\n\tassert.True(\"k1, k2\" == actual[\"alias\"] || \"k2, k1\" == actual[\"alias\"])\n\tassert.Equal(\"Red\", actual[\"color\"])\n}\n",
+    "test_code": "package config\n\nimport (\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/require\"\n)\n\nfunc Test_Enum_FromMap_ToMap_happy(t *testing.T) {\n\tassert := require.New(t)\n\n\ttarget := \u0026EnumT{}\n\n\texpected := map[string]interface{}{\n\t\t\"alias\": \"k1, k2\",\n\t\t\"color\": \"Red\",\n\t}\n\terr := target.FromMap(expected)\n\n\tassert.NoError(err)\n\tassert.True(target.Alias.Contains(\"k1\", false))\n\tassert.True(target.Alias.Contains(\"k2\", false))\n\tassert.Equal(\"Red\", target.Color.String())\n\n\tactual := target.ToMap()\n\n\tassert.True(\"k1, k2\" == actual[\"alias\"] || \"k2, k1\" == actual[\"alias\"])\n\tassert.Equal(\"Red\", actual[\"color\"])\n}\n\nfunc Test_Enum_FromMap_ToMap_missing_alias(t *testing.T) {\n\tassert := require.New(t)\n\n\ttarget := \u0026EnumT{}\n\n\texpected := map[string]interface{}{\n\t\t\"color\": \"Blue\",\n\t}\n\terr := target.FromMap(expected)\n\n\tassert.NoError(err)\n\tassert.False(target.Alias.Contains(\"k1\", false))\n\tassert.Equal(\"Blue\", target.Color.String())\n\n\tactual := target.ToMap()\n\n\tassert.Equal(\"Blue\", actual[\"color\"])\n}\n\nfunc Test_Enum_FromMap_ToMap_missing_color(t *testing.T) {\n\tassert := require.New(t)\n\n\ttarget := \u0026EnumT{}\n\n\texpected := map[string]interface{}{\n\t\t\"alias\": \"k1, k2\",\n\t}\n\terr := target.FromMap(expected)\n\n\tassert.NoError(err)\n\tassert.True(target.Alias.Contains(\"k1\", false))\n\tassert.Equal(\"\", target.Color.String())\n\n\tactual := target.ToMap()\n\n\tassert.True(\"k1, k2\" == actual[\"alias\"] || \"k2, k1\" == actual[\"alias\"])\n}\n\nfunc Test_Enum_FromMap_ToMap_invalid_alias(t *testing.T) {\n\tassert := require.New(t)\n\n\ttarget := \u0026EnumT{}\n\n\texpected := map[string]interface{}{\n\t\t\"alias\": \"k1, k2, invalid\",\n\t\t\"color\": \"Green\",\n\t}\n\terr := target.FromMap(expected)\n\n\tassert.Error(err)\n\tassert.False(target.Alias.Contains(\"invalid\", false))\n\tassert.Equal(\"Green\", target.Color.String())\n\n\tactual := target.ToMap()\n\n\tassert.True(\"k1, k2\" == actual[\"alias\"] || \"k2, k1\" == actual[\"alias\"])\n\tassert.Equal(\"Green\", actual[\"color\"])\n}\n\nfunc Test_Enum_FromMap_ToMap_empty_alias(t *testing.T) {\n\tassert := require.New(t)\n\n\ttarget := \u0026EnumT{}\n\n\texpected := map[string]interface{}{\n\t\t\"alias\": \"\",\n\t\t\"color\": \"Yellow\",\n\t}\n\terr := target.FromMap(expected)\n\n\tassert.NoError(err)\n\tassert.False(target.Alias.Contains(\"k1\", false))\n\tassert.Equal(\"Yellow\", target.Color.String())\n\n\tactual := target.ToMap()\n\n\tassert.Equal(\"\", actual[\"alias\"])\n\tassert.Equal(\"Yellow\", actual[\"color\"])\n}\n\n!!!!test_end!!!!\n",
+    "amount_of_generated_test_cases": 5,
+    "single_test_run_command": "go test -v config/enum_test.go"
+}

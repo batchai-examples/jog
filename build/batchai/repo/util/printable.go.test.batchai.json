@@ -1,0 +1,27 @@
+{
+    "path": "util/printable.go",
+    "model_usage_metrics": {
+        "Duration": 23059058213,
+        "OpenAiUsage": {
+            "completion_tokens": 0,
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "audio_tokens": 0,
+                "reasoning_tokens": 0,
+                "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+                "audio_tokens": 0,
+                "cached_tokens": 0
+            }
+        }
+    },
+    "test_file_path": "util/printable_test.go",
+    "existing_test_code": "",
+    "original_code": "package util\n\nimport (\n\t\"strings\"\n)\n\n// Printable ...\ntype Printable interface {\n\tIsEnabled() bool\n\tGetColor(value string) Color\n\tPrintTo(color Color, builder *strings.Builder, a string)\n}\n",
+    "test_code": "package util\n\nimport (\n\t\"strings\"\n\t\"testing\"\n)\n\n// TestPrintable_IsEnabled tests the IsEnabled method of Printable interface.\nfunc TestPrintable_IsEnabled(t *testing.T) {\n\t// Create a mock implementation of Printable interface\n\tmockPrintable := \u0026mockPrintable{}\n\n\t// Test case 1: Happy path - IsEnabled returns true\n\tt.Run(\"IsEnabled returns true\", func(t *testing.T) {\n\t\tmockPrintable.IsEnabledFunc = func() bool {\n\t\t\treturn true\n\t\t}\n\t\tresult := mockPrintable.IsEnabled()\n\t\tif result != true {\n\t\t\tt.Errorf(\"Expected true, got %v\", result)\n\t\t}\n\t})\n\n\t// Test case 2: Negative case - IsEnabled returns false\n\tt.Run(\"IsEnabled returns false\", func(t *testing.T) {\n\t\tmockPrintable.IsEnabledFunc = func() bool {\n\t\t\treturn false\n\t\t}\n\t\tresult := mockPrintable.IsEnabled()\n\t\tif result != false {\n\t\t\tt.Errorf(\"Expected false, got %v\", result)\n\t\t}\n\t})\n}\n\n// TestPrintable_GetColor tests the GetColor method of Printable interface.\nfunc TestPrintable_GetColor(t *testing.T) {\n\t// Create a mock implementation of Printable interface\n\tmockPrintable := \u0026mockPrintable{}\n\n\t// Test case 1: Happy path - GetColor returns a valid Color\n\tt.Run(\"GetColor returns a valid Color\", func(t *testing.T) {\n\t\texpectedColor := Red\n\t\tmockPrintable.GetColorFunc = func(value string) Color {\n\t\t\treturn expectedColor\n\t\t}\n\t\tresult := mockPrintable.GetColor(\"test\")\n\t\tif result != expectedColor {\n\t\t\tt.Errorf(\"Expected %v, got %v\", expectedColor, result)\n\t\t}\n\t})\n\n\t// Test case 2: Negative case - GetColor returns an invalid Color\n\tt.Run(\"GetColor returns an invalid Color\", func(t *testing.T) {\n\t\texpectedColor := InvalidColor\n\t\tmockPrintable.GetColorFunc = func(value string) Color {\n\t\t\treturn expectedColor\n\t\t}\n\t\tresult := mockPrintable.GetColor(\"test\")\n\t\tif result != expectedColor {\n\t\t\tt.Errorf(\"Expected %v, got %v\", expectedColor, result)\n\t\t}\n\t})\n}\n\n// TestPrintable_PrintTo tests the PrintTo method of Printable interface.\nfunc TestPrintable_PrintTo(t *testing.T) {\n\t// Create a mock implementation of Printable interface\n\tmockPrintable := \u0026mockPrintable{}\n\n\t// Test case 1: Happy path - PrintTo appends the string to the builder with the specified color\n\tt.Run(\"PrintTo appends the string to the builder with the specified color\", func(t *testing.T) {\n\t\texpectedColor := Red\n\t\texpectedString := \"test\"\n\t\tmockPrintable.PrintToFunc = func(color Color, builder *strings.Builder, a string) {\n\t\t\tbuilder.WriteString(a)\n\t\t}\n\t\tvar builder strings.Builder\n\t\tmockPrintable.PrintTo(expectedColor, \u0026builder, expectedString)\n\t\tresult := builder.String()\n\t\tif result != expectedString {\n\t\t\tt.Errorf(\"Expected %v, got %v\", expectedString, result)\n\t\t}\n\t})\n\n\t// Test case 2: Negative case - PrintTo does not append the string to the builder\n\tt.Run(\"PrintTo does not append the string to the builder\", func(t *testing.T) {\n\t\texpectedColor := Red\n\t\texpectedString := \"test\"\n\t\tmockPrintable.PrintToFunc = func(color Color, builder *strings.Builder, a string) {\n\t\t\t// Do nothing\n\t\t}\n\t\tvar builder strings.Builder\n\t\tmockPrintable.PrintTo(expectedColor, \u0026builder, expectedString)\n\t\tresult := builder.String()\n\t\tif result != \"\" {\n\t\t\tt.Errorf(\"Expected empty string, got %v\", result)\n\t\t}\n\t})\n}\n\n// mockPrintable is a mock implementation of Printable interface for testing purposes.\ntype mockPrintable struct {\n\tIsEnabledFunc  func() bool\n\tGetColorFunc   func(value string) Color\n\tPrintToFunc    func(color Color, builder *strings.Builder, a string)\n\tisEnabled      bool\n\tgetColor       Color\n\tprintTo        func(Color, *strings.Builder, string)\n}\n\n// IsEnabled returns the result of IsEnabledFunc.\nfunc (m *mockPrintable) IsEnabled() bool {\n\tif m.IsEnabledFunc != nil {\n\t\treturn m.IsEnabledFunc()\n\t}\n\treturn false\n}\n\n// GetColor returns the result of GetColorFunc.\nfunc (m *mockPrintable) GetColor(value string) Color {\n\tif m.GetColorFunc != nil {\n\t\treturn m.GetColorFunc(value)\n\t}\n\treturn InvalidColor\n}\n\n// PrintTo calls the PrintToFunc with the provided arguments.\nfunc (m *mockPrintable) PrintTo(color Color, builder *strings.Builder, a string) {\n\tif m.PrintToFunc != nil {\n\t\tm.PrintToFunc(color, builder, a)\n\t}\n}\n",
+    "amount_of_generated_test_cases": 4,
+    "single_test_run_command": "go test -v util"
+}
